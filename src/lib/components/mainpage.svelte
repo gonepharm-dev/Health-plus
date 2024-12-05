@@ -87,7 +87,9 @@
       </div>
     </div>
   </main>
-  
+
+
+
   <style>
     /* Custom styles can be added here if needed */
     /* Currently using Tailwind classes for styling */

@@ -53,7 +53,7 @@
               bind:value={email}
               maxlength={EMAIL_MAX_LENGTH}
               required
-              class="w-full px-3 py-2.5 bg-[#DBEAFE] border-none rounded-md focus:ring-0"
+              class="w-full px-3 py-2.5 bg-[#fcfcfd] border-none rounded-md focus:ring-0"
               placeholder="Enter your email"
             />
           </div>
@@ -68,7 +68,7 @@
               minlength={PASSWORD_MIN_LENGTH}
               maxlength={PASSWORD_MAX_LENGTH}
               required
-              class="w-full px-3 py-2.5 bg-[#DBEAFE] border-none rounded-md focus:ring-0"
+              class="w-full px-3 py-2.5 bg-[#fcfcfd] border-none rounded-md focus:ring-0"
               placeholder="Enter your password"
             />
           </div>
