@@ -1,6 +1,6 @@
 <script>
-  // Benefits data array containing all the information for each card
-  const benefits = [
+  // Benefits data array using Svelte 5's state management
+  let benefits = $state([
     {
       title: "Increased Accessibility",
       description: "Telehealth eliminates geographic barriers, providing healthcare access to rural, remote, or underserved areas. Patients can consult specialists or general practitioners without the need for travel.",
@@ -16,7 +16,7 @@
       description: "Telehealth lowers costs for both patients (reduced travel and time off work) and providers (lower operational expenses), making healthcare more affordable overall.",
       image: "telehealth with one patient and a doctor.png"
     }
-  ];
+  ]);
 </script>
 
 <!--Main Section Container-->
