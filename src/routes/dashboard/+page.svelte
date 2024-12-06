@@ -136,17 +136,17 @@
     let isMenuOpen = false;
 </script>
 
-<!-- Add sidebar -->
+<!-- Update the main layout structure -->
 <div class="flex">
-    <!-- Sidebar -->
-    <div class="fixed left-0 top-0 h-screen w-16 bg-[#010097] flex flex-col items-center py-8 text-white">
+    <!-- Sidebar - Transform to bottom nav on mobile -->
+    <div class="fixed md:left-0 md:top-0 md:h-screen md:w-16 h-16 w-full bottom-0 md:bottom-auto bg-[#010097] flex flex-row md:flex-col items-center md:py-8 justify-around md:justify-start text-white z-50">
         <!-- Logo -->
-        <div class="mb-8">
+        <div class="hidden md:block mb-8">
             <img src="/logo.png" alt="Logo" class="w-8 h-8">
         </div>
 
         <!-- Navigation Items -->
-        <nav class="flex-1 flex flex-col items-center gap-8">
+        <nav class="flex md:flex-col items-center md:gap-8 w-full md:w-auto justify-around md:justify-start flex-1">
             <button class="w-8 h-8 hover:text-[#00D001] transition-colors">
                 {@html HomeIcon}
             </button>
@@ -156,19 +156,22 @@
             <button class="w-8 h-8 hover:text-[#00D001] transition-colors">
                 {@html LocationIcon}
             </button>
+            <button class="w-8 h-8 hover:text-[#00D001] transition-colors md:hidden">
+                {@html SettingsIcon}
+            </button>
         </nav>
 
-        <!-- Settings at bottom -->
-        <button class="w-8 h-8 hover:text-[#00D001] transition-colors mt-auto mb-8">
+        <!-- Settings at bottom - Only show on desktop -->
+        <button class="hidden md:block w-8 h-8 hover:text-[#00D001] transition-colors mt-auto mb-8">
             {@html SettingsIcon}
         </button>
     </div>
 
-    <!-- Main Content (update the existing div) -->
-    <div class="ml-16 p-6 bg-[#DBEAFE] min-h-screen w-full">
+    <!-- Main Content -->
+    <div class="md:ml-16 p-4 md:p-6 bg-[#DBEAFE] min-h-screen w-full pb-20 md:pb-6">
         <!-- Search Header -->
-        <div class="flex items-center justify-between mb-8">
-            <div class="relative flex-1 max-w-md">
+        <div class="flex flex-col md:flex-row gap-4 md:gap-0 items-start md:items-center justify-between mb-8">
+            <div class="relative flex-1 max-w-md w-full">
                 <input 
                     type="text" 
                     placeholder="Search" 
@@ -178,7 +181,7 @@
                     {@html SearchIcon}
                 </span>
             </div>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-4 w-full md:w-auto justify-end">
                 <div class="flex items-center gap-2 text-gray-600">
                     <span>Kelvin</span>
                     <span class="w-4 h-4">
@@ -189,66 +192,64 @@
             </div>
         </div>
 
+        <!-- Quick Actions -->
+        <div>
+            <h2 class="text-lg font-medium text-gray-800 mb-4">Quick Actions</h2>
+            <div class="grid grid-cols-2 md:flex gap-3 md:gap-4">
+                <button class="flex items-center bg-[#010097] text-white p-3 md:p-4 rounded-xl hover:bg-[#6BAFA5] transition-colors flex-1 md:flex-initial">
+                    <div class="mr-2 md:mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div class="text-sm md:text-lg font-semibold">Appointment</div>
+                </button>
+
+                <button class="flex items-center bg-[#010097] text-white p-3 md:p-4 rounded-xl hover:bg-[#3A80D2] transition-colors flex-1 md:flex-initial">
+                    <div class="mr-2 md:mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div class="text-sm md:text-lg font-semibold">Start Call</div>
+                </button>
+
+                <button class="flex items-center bg-[#010097] text-white p-3 md:p-4 rounded-xl hover:bg-[#8B41D0] transition-colors flex-1 md:flex-initial">
+                    <div class="mr-2 md:mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <div class="text-sm md:text-lg font-semibold">Records</div>
+                </button>
+
+                <button class="flex items-center bg-[#00D001] text-white p-3 md:p-4 rounded-xl hover:bg-[#F57C00] transition-colors flex-1 md:flex-initial">
+                    <div class="mr-2 md:mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <div class="text-sm md:text-lg font-semibold">Billing</div>
+                </button>
+            </div>
+        </div>
+
         <!-- Main Grid Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
             <!-- Left Column -->
             <div class="lg:col-span-2 space-y-6">
-                <h1 class="text-2xl font-semibold text-gray-800">Find your doctor</h1>
-                
-                <!-- Quick Actions -->
-                <div>
-                    <h2 class="text-lg font-medium text-gray-800 mb-4">Quick Actions</h2>
-                    <div class="flex gap-4">
-                        <button class="flex items-center bg-[#010097] text-white p-4 rounded-xl hover:bg-[#6BAFA5] transition-colors">
-                            <div class="mr-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <div class="text-lg font-semibold">Appointment </div>
-                        </button>
-
-                        <button class="flex items-center bg-[#010097] text-white p-4 rounded-xl hover:bg-[#3A80D2] transition-colors">
-                            <div class="mr-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <div class="text-lg font-semibold">Start Call</div>
-                        </button>
-
-                        <button class="flex items-center bg-[#010097] text-white p-4 rounded-xl hover:bg-[#8B41D0] transition-colors">
-                            <div class="mr-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                            </div>
-                            <div class="text-lg font-semibold">Records</div>
-                        </button>
-
-                        <button class="flex items-center bg-[#00D001] text-white p-4 rounded-xl hover:bg-[#F57C00] transition-colors">
-                            <div class="mr-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                            </div>
-                            <div class="text-lg font-semibold">Billing</div>
-                        </button>
-                    </div>
-                </div>
-
                 <!-- Messages -->
                 <div>
                     <h2 class="text-lg font-medium text-gray-800 mb-4">Recent messages</h2>
-                    <div class="space-y-4">
+                    <div class="space-y-3 md:space-y-4">
                         {#each state.messages as message}
-                            <div class="flex items-center gap-4 bg-white p-4 rounded-xl">
-                                <img src={message.avatar} alt={message.doctor} class="w-10 h-10 rounded-full">
-                                <div class="flex-1">
-                                    <h3 class="font-medium text-gray-800">{message.doctor}</h3>
-                                    <p class="text-sm text-gray-500">{message.message}</p>
+                            <div class="flex items-center gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-xl">
+                                <img src={message.avatar} alt={message.doctor} class="w-8 md:w-10 h-8 md:h-10 rounded-full">
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-medium text-gray-800 truncate">{message.doctor}</h3>
+                                    <p class="text-sm text-gray-500 truncate">{message.message}</p>
                                 </div>
-                                <span class="text-sm text-gray-400">{message.time}</span>
+                                <span class="text-xs md:text-sm text-gray-400 shrink-0">{message.time}</span>
                             </div>
                         {/each}
                     </div>
@@ -256,7 +257,7 @@
             </div>
 
             <!-- Right Column -->
-            <div class="bg-white rounded-xl p-6">
+            <div class="bg-white rounded-xl p-4 md:p-6">
                 <!-- Calendar -->
                 <div class="mb-6">
                     <div class="flex items-center justify-between mb-4">
@@ -275,7 +276,7 @@
                         </div>
                     </div>
 
-                    <!-- Calendar Grid with softer styling -->
+                    <!-- Calendar Grid -->
                     <div class="grid grid-cols-7 gap-1 text-sm">
                         {#each daysOfWeek as day}
                             <div class="text-center text-gray-400 py-2">{day}</div>
