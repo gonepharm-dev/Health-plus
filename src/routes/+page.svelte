@@ -1,2 +1,10 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<script lang="ts">
+    import MainPage from '$lib/components/mainpage.svelte';
+    import Benefits from '$lib/components/benefits.svelte';
+    import Services from '$lib/components/services.svelte';
+  </script>
+  
+  <MainPage />
+  <Benefits/>
+  <Services/>
+  
