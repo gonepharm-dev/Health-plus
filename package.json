@@ -11,7 +11,9 @@
 		"format": "prettier --write .",
 		"lint": "prettier --check .",
 		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run"
+		"test": "npm run test:unit -- --run",
+		"server": "bun run Backend/server/index.ts",
+		"pocketbase": "cd Backend/pocketbase && ./pocketbase serve"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^3.0.0",
@@ -30,6 +32,9 @@
 		"vitest": "^2.0.4"
 	},
 	"dependencies": {
-		"@tailwindcss/typography": "^0.5.15"
+		"@tailwindcss/typography": "^0.5.15",
+		"dotenv": "^16.4.7",
+		"elysia": "^1.1.26",
+		"pocketbase": "^0.22.1"
 	}
 }
