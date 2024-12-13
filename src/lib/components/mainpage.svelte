@@ -41,12 +41,17 @@
         
         <!-- Left Section: Decorative Icons -->
         <div class="w-full md:w-1/2">
-          <div class="max-w-md mx-auto">
-            <img 
-              src="/WhatsApp Image 2024-12-02 at 11.08.43_888534f3.jpg" 
-              alt="Health Plus Hero" 
-              class="w-full h-auto object-contain"
-            />
+          <div class="max-w-sm mx-auto relative">
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/50 to-gray-900/80 rounded-lg z-10"></div>
+            <video 
+              src="/telehealthvideo.mp4"
+              autoplay
+              loop
+              muted
+              class="w-full h-96 object-cover rounded-lg"
+            >
+              Your browser does not support the video tag.
+            </video>
           </div>
         </div>
   
@@ -93,5 +98,4 @@
   <style>
     /* Custom styles can be added here if needed */
     /* Currently using Tailwind classes for styling */
-  </style>
-  
+  </style>  
