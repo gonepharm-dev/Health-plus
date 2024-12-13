@@ -1,6 +1,5 @@
 import { CreateUser } from "../dbOperations/user";
 import Elysia, {t} from "elysia";
-import { newUserType } from "../dbOperations/user";
 //import { RecordModel } from "pocketbase";
 
 export const r = '/sign-up'
