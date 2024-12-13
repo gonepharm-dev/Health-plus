@@ -2,321 +2,198 @@
     import { onMount } from 'svelte';
     import { fade } from 'svelte/transition';
 
-    // SVG Icons as components
-    const HomeIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-    </svg>`;
+    // State Management
+    let isSidebarOpen = false;
 
-    const SearchIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-    </svg>`;
-
-    const LocationIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>`;
-
-    const SettingsIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-    </svg>`;
-
-    let state = $state({
-        health: {
-            pulse: 65,
-            bloodPressure: '120/80',
-            temperature: '36.7°C',
-            sleepTime: '8'
+    // Mock Data State
+    let state = {
+        overview: {
+            upcomingAppointments: 2,
+            pastAppointments: 8,
+            prescriptions: 3,
+            documents: 12
         },
-        messages: [
+        upcomingAppointments: [
             {
-                id: 1,
-                doctor: 'Dr. John Kioko',
-                message: 'How you been everything?',
-                time: '14:37',
-                avatar: '/confident-professional-man-stockcake.webp'
+                doctorName: "Dr. Sarah Johnson",
+                specialty: "Endocrinologist",
+                description: "Follow-up consultation for diabetes management",
+                time: "10:30 AM",
+                isConfirmed: true,
+                thumbnail: "/confident-professional-man-stockcake.webp"
             },
             {
-                id: 2,
-                doctor: 'Dr. Jane Njeri',
-                message: 'Please make sure to take your medication as directed and don\'t hesitate...',
-                time: '14:37',
-                avatar: '/confident-professional-man-stockcake.webp'
+                doctorName: "Dr. Michael Chen",
+                specialty: "Physical Therapist",
+                description: "Initial consultation for chronic back pain",
+                time: "2:15 PM",
+                isConfirmed: false,
+                thumbnail: "/confident-professional-man-stockcake.webp"
             },
             {
-                id: 3,
-                doctor: 'Dr. Patrick Omuga',
-                message: 'Let\'s schedule another appointment to discuss your treatment options',
-                time: '14:37',
-                avatar: '/confident-professional-man-stockcake.webp'
-            }
-        ],
-        appointments: [
-            {
-                doctor: 'Dr. John Kioko',
-                specialty: 'Dentist',
-                time: 'Today, 2:00 PM',
-                avatar: '/confident-professional-man-stockcake.webp'
+                doctorName: "Dr. Sarah Johnson",
+                specialty: "Endocrinologist",
+                description: "Follow-up consultation for diabetes management",
+                time: "10:30 AM",
+                isConfirmed: true,
+                thumbnail: "/confident-professional-man-stockcake.webp"
             },
             {
-                doctor: 'Dr. Patrick Omuga',
-                specialty: 'Dentist',
-                time: 'June 29, 1:00 PM',
-                avatar: '/confident-professional-man-stockcake.webp'
+                doctorName: "Dr. Michael Chen",
+                specialty: "Physical Therapist",
+                description: "Initial consultation for chronic back pain",
+                time: "2:15 PM",
+                isConfirmed: false,
+                thumbnail: "/confident-professional-man-stockcake.webp"
             }
         ]
-    });
-
-    // Calendar data
-    let currentDate = new Date();
-    let currentMonth = currentDate.getMonth();
-    let currentYear = currentDate.getFullYear();
-
-    const months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-
-    const daysOfWeek = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-
-    function getDaysInMonth(month: number, year: number) {
-        return new Date(year, month + 1, 0).getDate();
-    }
-
-    function getFirstDayOfMonth(month: number, year: number) {
-        return new Date(year, month, 1).getDay();
-    }
-
-    function generateCalendarDays(month: number, year: number) {
-        const daysInMonth = getDaysInMonth(month, year);
-        const firstDay = getFirstDayOfMonth(month, year);
-        const days = [];
-
-        // Add empty slots for days before the first day of the month
-        for (let i = 0; i < firstDay; i++) {
-            days.push({ day: '', isCurrentMonth: false });
-        }
-
-        // Add the days of the month
-        for (let i = 1; i <= daysInMonth; i++) {
-            days.push({ 
-                day: i, 
-                isCurrentMonth: true,
-                isToday: i === currentDate.getDate() && 
-                         month === currentDate.getMonth() && 
-                         year === currentDate.getFullYear(),
-                hasAppointment: i === 7 // Example: marking day 7 as having an appointment
-            });
-        }
-
-        return days;
-    }
-
-    $effect(() => {
-        generateCalendarDays(currentMonth, currentYear);
-    });
-
-    function previousMonth() {
-        if (currentMonth === 0) {
-            currentMonth = 11;
-            currentYear--;
-        } else {
-            currentMonth--;
-        }
-    }
-
-    function nextMonth() {
-        if (currentMonth === 11) {
-            currentMonth = 0;
-            currentYear++;
-        } else {
-            currentMonth++;
-        }
-    }
-
-    let isMenuOpen = false;
+    };
 </script>
 
-<!-- Update the main layout structure -->
-<div class="flex">
-    <!-- Sidebar - Transform to bottom nav on mobile -->
-    <div class="fixed md:left-0 md:top-0 md:h-screen md:w-16 h-16 w-full bottom-0 md:bottom-auto bg-[#010097] flex flex-row md:flex-col items-center md:py-8 justify-around md:justify-start text-white z-50">
-        <!-- Logo -->
-        <div class="hidden md:block mb-8">
-            <img src="/logo.png" alt="Logo" class="w-8 h-8">
+<div class="flex min-h-screen bg-gray-50"><!-- or any other gray shade you prefer -->
+    <!-- Sidebar - Modified positioning -->
+    <aside class="fixed lg:sticky top-0 h-screen w-[240px] border-r bg-white p-6 
+        transform transition-transform duration-300 lg:translate-x-0 
+        {isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:block z-20">
+        <!-- Logo Section -->
+        <div class="flex items-center gap-2 mb-8">
+            
+            <span class="text-xl font-semibold">HealthPlus</span>
         </div>
 
-        <!-- Navigation Items -->
-        <nav class="flex md:flex-col items-center md:gap-8 w-full md:w-auto justify-around md:justify-start flex-1">
-            <button class="w-8 h-8 hover:text-[#00D001] transition-colors">
-                {@html HomeIcon}
+        <!-- Navigation Links -->
+        <div class="space-y-4">
+            <!-- Quick Action Button -->
+            <button class="flex items-center gap-2 text-blue-600 font-medium">
+                <span class="text-2xl">+</span>
+                Book Appointment
             </button>
-            <button class="w-8 h-8 hover:text-[#00D001] transition-colors">
-                {@html SearchIcon}
-            </button>
-            <button class="w-8 h-8 hover:text-[#00D001] transition-colors">
-                {@html LocationIcon}
-            </button>
-            <button class="w-8 h-8 hover:text-[#00D001] transition-colors md:hidden">
-                {@html SettingsIcon}
-            </button>
-        </nav>
 
-        <!-- Settings at bottom - Only show on desktop -->
-        <button class="hidden md:block w-8 h-8 hover:text-[#00D001] transition-colors mt-auto mb-8">
-            {@html SettingsIcon}
-        </button>
-    </div>
+            <!-- Main Navigation Menu -->
+            <nav class="space-y-2">
+                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Dashboard</a>
+                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Appointments</a>
+                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Medical Records</a>
+                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Prescriptions</a>
+                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Messages</a>
+            </nav>
+        </div>
 
-    <!-- Main Content -->
-    <div class="md:ml-16 p-4 md:p-6 bg-[#DBEAFE] min-h-screen w-full pb-20 md:pb-6">
-        <!-- Search Header -->
-        <div class="flex flex-col md:flex-row gap-4 md:gap-0 items-start md:items-center justify-between mb-8">
-            <div class="relative flex-1 max-w-md w-full">
-                <input 
-                    type="text" 
-                    placeholder="Search" 
-                    class="w-full pl-10 pr-4 py-2.5 rounded-full bg-white border-none shadow-sm"
+        <!-- Bottom Action Button -->
+        <div class="absolute bottom-6 left-6 right-6">
+            <button class="w-full py-2 text-blue-600 border border-blue-600 rounded-lg">
+                Start Virtual Visit
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Wrapper - Modified structure -->
+    <main class="flex-1 w-full lg:ml-0">
+        <!-- Mobile Header -->
+        <div class="lg:hidden fixed top-0 left-0 right-0 bg-white p-4 border-b z-10">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <img src="/healthplus-logo.png" alt="HealthPlus" class="h-6">
+                    <span class="text-lg font-semibold">HealthPlus</span>
+                </div>
+                <!-- Mobile Menu Toggle Button -->
+                <button 
+                    class="p-2 hover:bg-gray-100 rounded-lg"
+                    on:click={() => isSidebarOpen = !isSidebarOpen}
                 >
-                <span class="absolute left-3 top-2.5 text-gray-400 w-5 h-5">
-                    {@html SearchIcon}
-                </span>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
             </div>
-            <div class="flex items-center gap-4 w-full md:w-auto justify-end">
-                <div class="flex items-center gap-2 text-gray-600">
-                    <span>Kelvin</span>
-                    <span class="w-4 h-4">
-                        {@html LocationIcon}
-                    </span>
+        </div>
+
+        <!-- Main Content Area - Adjusted padding and margin -->
+        <div class="p-4 lg:p-8 mt-16 lg:mt-0">
+            <!-- Welcome Banner -->
+            <div class="bg-blue-100 rounded-2xl p-4 lg:p-6 mb-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-xl lg:text-2xl font-semibold mb-1">Welcome, John</h1>
+                        <p class="text-sm lg:text-base text-gray-600">
+                            You have {state.overview.upcomingAppointments} upcoming appointments
+                        </p>
+                    </div>
                 </div>
-                <img src="/confident-professional-man-stockcake.webp" alt="Profile" class="w-8 h-8 rounded-full">
             </div>
-        </div>
 
-        <!-- Quick Actions -->
-        <div>
-            <h2 class="text-lg font-medium text-gray-800 mb-4">Quick Actions</h2>
-            <div class="grid grid-cols-2 md:flex gap-3 md:gap-4">
-                <button class="flex items-center bg-[#010097] text-white p-3 md:p-4 rounded-xl hover:bg-[#6BAFA5] transition-colors flex-1 md:flex-initial">
-                    <div class="mr-2 md:mr-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+            <!-- Statistics Grid -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <!-- Upcoming Appointments Stat -->
+                <div class="bg-blue-100 p-4 rounded-xl">
+                    <div class="flex flex-col lg:flex-row lg:items-center gap-2">
+                        <span class="text-xl lg:text-2xl font-semibold">{state.overview.upcomingAppointments}</span>
+                        <span class="text-xs lg:text-sm">Upcoming Appointments</span>
                     </div>
-                    <div class="text-sm md:text-lg font-semibold">Appointment</div>
-                </button>
-
-                <button class="flex items-center bg-[#010097] text-white p-3 md:p-4 rounded-xl hover:bg-[#3A80D2] transition-colors flex-1 md:flex-initial">
-                    <div class="mr-2 md:mr-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
+                </div>
+                <!-- Past Appointments Stat -->
+                <div class="bg-green-100 p-4 rounded-xl">
+                    <div class="flex flex-col lg:flex-row lg:items-center gap-2">
+                        <span class="text-xl lg:text-2xl font-semibold">{state.overview.pastAppointments}</span>
+                        <span class="text-xs lg:text-sm">Past Appointments</span>
                     </div>
-                    <div class="text-sm md:text-lg font-semibold">Start Call</div>
-                </button>
-
-                <button class="flex items-center bg-[#010097] text-white p-3 md:p-4 rounded-xl hover:bg-[#8B41D0] transition-colors flex-1 md:flex-initial">
-                    <div class="mr-2 md:mr-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+                </div>
+                <!-- Active Prescriptions Stat -->
+                <div class="bg-purple-100 p-4 rounded-xl">
+                    <div class="flex flex-col lg:flex-row lg:items-center gap-2">
+                        <span class="text-xl lg:text-2xl font-semibold">{state.overview.prescriptions}</span>
+                        <span class="text-xs lg:text-sm">Active Prescriptions</span>
                     </div>
-                    <div class="text-sm md:text-lg font-semibold">Records</div>
-                </button>
-
-                <button class="flex items-center bg-[#00D001] text-white p-3 md:p-4 rounded-xl hover:bg-[#F57C00] transition-colors flex-1 md:flex-initial">
-                    <div class="mr-2 md:mr-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+                </div>
+                <!-- Medical Documents Stat -->
+                <div class="bg-indigo-100 p-4 rounded-xl">
+                    <div class="flex flex-col lg:flex-row lg:items-center gap-2">
+                        <span class="text-xl lg:text-2xl font-semibold">{state.overview.documents}</span>
+                        <span class="text-xs lg:text-sm">Medical Documents</span>
                     </div>
-                    <div class="text-sm md:text-lg font-semibold">Billing</div>
-                </button>
+                </div>
             </div>
-        </div>
 
-        <!-- Main Grid Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-            <!-- Left Column -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Messages -->
-                <div>
-                    <h2 class="text-lg font-medium text-gray-800 mb-4">Recent messages</h2>
-                    <div class="space-y-3 md:space-y-4">
-                        {#each state.messages as message}
-                            <div class="flex items-center gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-xl">
-                                <img src={message.avatar} alt={message.doctor} class="w-8 md:w-10 h-8 md:h-10 rounded-full">
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="font-medium text-gray-800 truncate">{message.doctor}</h3>
-                                    <p class="text-sm text-gray-500 truncate">{message.message}</p>
+            <!-- Appointments List -->
+            <div class="space-y-4">
+                {#each state.upcomingAppointments as appointment}
+                    <div class="bg-white p-4 rounded-xl flex flex-col lg:flex-row lg:items-center gap-4">
+                        <!-- Doctor's Image -->
+                        <img src={appointment.thumbnail} alt={appointment.doctorName} class="w-12 h-12 lg:w-16 lg:h-16 rounded-full object-cover">
+                        <!-- Appointment Details -->
+                        <div class="flex-1">
+                            <h3 class="font-semibold">{appointment.doctorName}</h3>
+                            <p class="text-sm text-blue-600">{appointment.specialty}</p>
+                            <p class="text-sm text-gray-500">{appointment.description}</p>
+                            <p class="text-sm text-gray-400">Appointment time: {appointment.time}</p>
+                        </div>
+                        <!-- Appointment Status and Actions -->
+                        <div class="flex items-center justify-between lg:justify-end w-full lg:w-auto gap-4">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm">{appointment.isConfirmed ? 'Confirmed' : 'Pending'}</span>
+                                <div class="w-12 h-6 bg-gray-200 rounded-full relative">
+                                    <div class={`absolute w-5 h-5 rounded-full top-0.5 transition-all
+                                        ${appointment.isConfirmed ? 'bg-green-600 right-0.5' : 'bg-gray-400 left-0.5'}`}>
+                                    </div>
                                 </div>
-                                <span class="text-xs md:text-sm text-gray-400 shrink-0">{message.time}</span>
                             </div>
-                        {/each}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column -->
-            <div class="bg-white rounded-xl p-4 md:p-6">
-                <!-- Calendar -->
-                <div class="mb-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-medium">July 2023</h3>
-                        <div class="flex gap-2">
-                            <button class="p-1 hover:bg-gray-100 rounded-full">
-                                <svg class="w-5 h-5 text-gray-600" viewBox="0 0 24 24">
-                                    <path d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </button>
-                            <button class="p-1 hover:bg-gray-100 rounded-full">
-                                <svg class="w-5 h-5 text-gray-600" viewBox="0 0 24 24">
-                                    <path d="M9 5l7 7-7 7" />
+                            <button class="p-2 hover:bg-gray-100 rounded-full">
+                                <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
                                 </svg>
                             </button>
                         </div>
                     </div>
-
-                    <!-- Calendar Grid -->
-                    <div class="grid grid-cols-7 gap-1 text-sm">
-                        {#each daysOfWeek as day}
-                            <div class="text-center text-gray-400 py-2">{day}</div>
-                        {/each}
-                        {#each generateCalendarDays(currentMonth, currentYear) as { day, isCurrentMonth, isToday }}
-                            <div class="aspect-square flex items-center justify-center">
-                                {#if day !== ''}
-                                    <button class="w-8 h-8 rounded-full flex items-center justify-center
-                                        {isToday ? 'bg-teal-400 text-white' : 'hover:bg-gray-100'}">
-                                        {day}
-                                    </button>
-                                {/if}
-                            </div>
-                        {/each}
-                    </div>
-                </div>
-
-                <!-- Appointments -->
-                <div>
-                    <h3 class="text-lg font-medium mb-4">Appointments</h3>
-                    <div class="space-y-4">
-                        {#each state.appointments as appointment}
-                            <div class="flex items-center gap-4">
-                                <img src={appointment.avatar} alt={appointment.doctor} class="w-12 h-12 rounded-full">
-                                <div>
-                                    <h4 class="font-medium">{appointment.doctor}</h4>
-                                    <p class="text-sm text-gray-500">{appointment.specialty}</p>
-                                    <p class="text-sm text-teal-500">{appointment.time}</p>
-                                </div>
-                            </div>
-                        {/each}
-                    </div>
-                </div>
+                {/each}
             </div>
         </div>
-    </div>
+    </main>
 </div>
 
-<style>
-    .aspect-square {
-        aspect-ratio: 1 / 1;
-    }
-</style>
+<!-- Mobile Overlay -->
+{#if isSidebarOpen}
+    <div 
+        class="fixed inset-0 bg-black bg-opacity-50 lg:hidden z-10"
+        on:click={() => isSidebarOpen = false}
+    ></div>
+{/if}
