@@ -8,3 +8,4 @@ export interface newAppointmentType {
     consultation_type: string
     // "video" | "in-person" | "phone call"
 }
+

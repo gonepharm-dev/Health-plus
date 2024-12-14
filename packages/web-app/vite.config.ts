@@ -6,5 +6,13 @@ export default defineConfig({
 
 	test: {
 		include: ['src/**/*.{test,spec}.{js,ts}']
-	}
+	},
+	server: {
+		fs: {
+		  allow: [
+			'/Users/Mikemax/dev/Health-plus/packages/web-app',
+			'/Users/Mikemax/dev/Health-plus/node_modules',
+		  ],
+		},
+	  },
 });
