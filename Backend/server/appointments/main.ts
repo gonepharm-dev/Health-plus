@@ -1,7 +1,7 @@
 import Elysia from "elysia";
 import { CreateNewAppointment } from "./CreateAppointment";
 
-export const AppointmentsController = new Elysia().group("/appointents", (app) => {
+export const AppointmentsController = new Elysia().group("/appointents", (app) => 
     app
         .use(CreateNewAppointment)
         .onError(({ code, error, set }) => {
@@ -23,4 +23,4 @@ export const AppointmentsController = new Elysia().group("/appointents", (app) =
             }
             }),
 
-})
+)
