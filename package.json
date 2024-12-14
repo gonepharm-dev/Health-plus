@@ -1,7 +1,11 @@
 {
 	"name": "health-plus",
 	"version": "0.0.1",
+	"module": "index.ts",
 	"type": "module",
+	"workspaces": [
+		"packages/*"
+	  ],
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
