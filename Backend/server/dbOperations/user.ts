@@ -1,17 +1,5 @@
 import { DBInstance } from "../utils/startDB";
-
-export interface newUserType {
-    password: string;
-    passwordConfirm: string;
-    email: string;
-    emailVisibility: boolean;
-    verified: boolean;
-    username: string;
-    full_name: string;
-    specialization: string;
-    contact_number: number;
-    role: string;
-}
+import { newUserType } from "../types/userTypes";
 
 export const CreateUser = async (user: newUserType) => {
     // Check if the password and passwordConfirm match
