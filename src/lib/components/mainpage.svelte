@@ -33,7 +33,7 @@
     ];
   </script>
   
-  <main class="min-h-screen">
+  <main class="min-h-screen bg-gradient-to-br from-blue-100 to-blue-100 dark:from-gray-900 dark:to-gray-900 py-24">
     <!-- Hero Section: Contains the main landing content -->
     <div class="container mx-auto px-4 py-12 md:py-24">
       <!-- Flex container for hero content - stacks vertically on mobile, horizontal on desktop -->

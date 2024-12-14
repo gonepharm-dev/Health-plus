@@ -1,15 +1,12 @@
-<script>
-    import "../app.css";
-  </script>
-  
-  <div class="bg-[#DBEAFE]">
-    <slot />
-  </div>
-  
-  <style>
-    :global(body) {
-      background-color: #DBEAFE;
-      margin: 0;
-      padding: 0;
-    }
-  </style>
+<script lang="ts">
+	import Footer from '$lib/components/Footer.svelte';
+import Navbar from '$lib/components/Navbar.svelte';
+import '../app.css';
+	let { children } = $props();
+</script>
+<Navbar />
+<div class="flex min-h-screen flex-col">
+	{@render children()}
+
+</div>
+<Footer	/>
