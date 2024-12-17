@@ -10,3 +10,8 @@ export interface newUserType {
     contact_number: number;
     role: string;
 }
+
+export interface loginUserType {
+    subject: string;
+    password: string;
+}

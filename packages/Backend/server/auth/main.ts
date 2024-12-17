@@ -1,9 +1,11 @@
 import Elysia from "elysia";
 import { RegisterUsers } from "./RegisterUser";
+import { SignInUser } from "./SignInUser";
 
 export const UsersController = new Elysia().group("/users", (app) => 
     app
         .use(RegisterUsers)
+        .use(SignInUser)
         .onError(({ code, error, set }) => {
         if (code === "VALIDATION") {
             console.error("❗️ Caught by auth error handling ", error.message);
