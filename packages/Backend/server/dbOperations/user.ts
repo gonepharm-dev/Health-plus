@@ -1,5 +1,5 @@
 import { DBInstance } from "../utils/startDB";
-import { newUserType } from "../types/userTypes";
+import { type newUserType } from "../types/userTypes";
 
 export const CreateUser = async (user: newUserType) => {
     // Check if the password and passwordConfirm match
@@ -34,6 +34,6 @@ export const CreateUser = async (user: newUserType) => {
         return { message: "OK", createdUser };
 
     } catch (error) {
-        return { message: "error", error: error.message || "An unexpected error occurred" };
+        return { message: "error", error: error || "An unexpected error occurred" };
     }
 };

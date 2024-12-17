@@ -1,11 +1,7 @@
 import { DBInstance } from "../utils/startDB";
-import { newAppointmentType } from "../types/apointmentTypes";
+import { type newAppointmentType } from "../types/apointmentTypes";
 
-<<<<<<< HEAD:Backend/server/dbOperations/appointment.ts
-const CreateNewAppointment = async(appointment: newAppointmentType) => {
-=======
 export const CreateAppointment = async(appointment: newAppointmentType) => {
->>>>>>> origin/server:packages/Backend/server/dbOperations/appointment.ts
     const {doctor_id, patient_id} = appointment
     try{
         //confirm if doctor id is valid
