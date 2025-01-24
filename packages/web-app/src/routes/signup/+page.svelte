@@ -2,23 +2,29 @@
   // Form field state variables
   let fullName = '';
   let email = '';
+  let username = '';
   let password = '';
   let confirmPassword = '';
+  let specialization = '';
+  let contactNumber = '';
+  let role = '';
+  let isLoading = false;
+  let apiResponse: { message: string } | null = null;
 
   // Error state object
   let errors = {
     fullName: '',
     email: '',
+    username: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    specialization: '',
+    contactNumber: '',
+    role: '',
+    apiError: ''
   };
 
-  // ==================== VALIDATION FUNCTIONS ====================
-
-  /**
-   * Validates the full name field
-   * @returns {boolean} - Returns true if valid, false otherwise
-   */
+  // Validation functions (previous validations remain the same)
   function validateFullName() {
     if (!fullName) {
       errors.fullName = 'Full name is required';
@@ -32,10 +38,6 @@
     return true;
   }
 
-  /**
-   * Validates the email field using regex
-   * @returns {boolean} - Returns true if valid, false otherwise
-   */
   function validateEmail() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email) {
@@ -50,10 +52,19 @@
     return true;
   }
 
-  /**
-   * Validates the password field with multiple criteria
-   * @returns {boolean} - Returns true if valid, false otherwise
-   */
+  function validateUsername() {
+    if (!username) {
+      errors.username = 'Username is required';
+      return false;
+    }
+    if (username.length < 3) {
+      errors.username = 'Username must be at least 3 characters';
+      return false;
+    }
+    errors.username = '';
+    return true;
+  }
+
   function validatePassword() {
     if (!password) {
       errors.password = 'Password is required';
@@ -75,10 +86,6 @@
     return true;
   }
 
-  /**
-   * Validates the confirm password field
-   * @returns {boolean} - Returns true if valid, false otherwise
-   */
   function validateConfirmPassword() {
     if (!confirmPassword) {
       errors.confirmPassword = 'Please confirm your password';
@@ -92,24 +99,105 @@
     return true;
   }
 
-  /**
-   * Handles form submission and validates all fields
-   * @param {Event} event - The form submission event
-   */
-  function handleSubmit(event: Event) {
+  function validateRole() {
+    if (!role) {
+      errors.role = 'Role is required';
+      return false;
+    }
+    errors.role = '';
+    return true;
+  }
+
+  function validateContactNumber() {
+    if (!contactNumber) {
+      errors.contactNumber = 'Contact number is required';
+      return false;
+    }
+    // Basic number validation
+    if (!/^\d+$/.test(contactNumber)) {
+      errors.contactNumber = 'Please enter a valid contact number';
+      return false;
+    }
+    errors.contactNumber = '';
+    return true;
+  }
+
+  async function handleSubmit(event: Event) {
     event.preventDefault();
     
+    // Reset previous API errors
+    errors.apiError = '';
+    apiResponse = null;
+
     // Validate all fields
     const isFullNameValid = validateFullName();
     const isEmailValid = validateEmail();
+    const isUsernameValid = validateUsername();
     const isPasswordValid = validatePassword();
     const isConfirmPasswordValid = validateConfirmPassword();
+    const isRoleValid = validateRole();
+    const isContactNumberValid = validateContactNumber();
 
     // Proceed only if all validations pass
-    if (isFullNameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid) {
-      console.log('Form is valid, submitting...');
-      // TODO: Add your API call or form submission logic here
+    if (isFullNameValid && isEmailValid && isUsernameValid && 
+        isPasswordValid && isConfirmPasswordValid && 
+        isRoleValid && isContactNumberValid) {
+      
+      isLoading = true;
+
+      try {
+        const response = await fetch('/sign-up', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            username,
+            full_name: fullName,
+            password,
+            passwordConfirm: confirmPassword,
+            specialization,
+            contact_number: parseInt(contactNumber, 10),
+            role
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          errors.apiError = data.message || 'Registration failed';
+          apiResponse = { message: 'error' };
+        } else {
+          apiResponse = { message: 'success' };
+          // Reset form or redirect
+          resetForm();
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        errors.apiError = 'Network error. Please try again.';
+        apiResponse = { message: 'error' };
+      } finally {
+        isLoading = false;
+      }
     }
+  }
+
+  function resetForm() {
+    fullName = '';
+    email = '';
+    username = '';
+    password = '';
+    confirmPassword = '';
+    specialization = '';
+    contactNumber = '';
+    role = '';
+    errors = {
+      fullName: '', email: '', username: '', 
+      password: '', confirmPassword: '', 
+      specialization: '', contactNumber: '', role: '',
+      apiError: ''
+    };
   }
 </script>
 
@@ -155,6 +243,72 @@
           </div>
         </div>
 
+        <!-- Username and Role Fields Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+          <!-- Username Input -->
+          <div>
+            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+            <input
+              type="text"
+              id="username"
+              bind:value={username}
+              on:blur={validateUsername}
+              class="w-full px-3 py-2 text-sm md:text-base bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            {#if errors.username}
+              <p class="text-red-500 text-xs mt-1">{errors.username}</p>
+            {/if}
+          </div>
+
+          <!-- Role Input -->
+          <div>
+            <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <select
+              id="role"
+              bind:value={role}
+              on:blur={validateRole}
+              class="w-full px-3 py-2 text-sm md:text-base bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Select Role</option>
+              <option value="doctor">Doctor</option>
+              <option value="patient">Patient</option>
+              <option value="admin">Admin</option>
+            </select>
+            {#if errors.role}
+              <p class="text-red-500 text-xs mt-1">{errors.role}</p>
+            {/if}
+          </div>
+        </div>
+
+        <!-- Contact and Specialization Fields Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+          <!-- Contact Number Input -->
+          <div>
+            <label for="contactNumber" class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+            <input
+              type="tel"
+              id="contactNumber"
+              bind:value={contactNumber}
+              on:blur={validateContactNumber}
+              class="w-full px-3 py-2 text-sm md:text-base bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            {#if errors.contactNumber}
+              <p class="text-red-500 text-xs mt-1">{errors.contactNumber}</p>
+            {/if}
+          </div>
+
+          <!-- Specialization Input -->
+          <div>
+            <label for="specialization" class="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
+            <input
+              type="text"
+              id="specialization"
+              bind:value={specialization}
+              class="w-full px-3 py-2 text-sm md:text-base bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
         <!-- Password Fields Row -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           <!-- Password Input -->
@@ -188,12 +342,20 @@
           </div>
         </div>
 
+        <!-- API Error Message -->
+        {#if errors.apiError}
+          <div class="text-red-500 text-sm text-center">
+            {errors.apiError}
+          </div>
+        {/if}
+
         <!-- Form Actions -->
         <button
           type="submit"
-          class="w-full sm:w-1/2 mx-auto block bg-blue-900 text-white py-2 rounded-lg hover:bg-blue-800 transition-colors text-sm md:text-base"
+          disabled={isLoading}
+          class="w-full sm:w-1/2 mx-auto block bg-blue-900 text-white py-2 rounded-lg hover:bg-blue-800 transition-colors text-sm md:text-base disabled:opacity-50"
         >
-          Sign Up
+          {isLoading ? 'Signing Up...' : 'Sign Up'}
         </button>
 
         <!-- Login Link -->
@@ -224,4 +386,3 @@
     }
   }
 </style>
-
