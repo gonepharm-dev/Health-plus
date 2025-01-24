@@ -1,8 +1,11 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
+
   // Form state variables
   let email = '';
   let password = '';
   let rememberMe = false;
+  let errorMessage = '';
 
   // Form constraints
   const EMAIL_MAX_LENGTH = 50;
@@ -12,22 +15,51 @@
   // Form validation function
   function validateForm() {
     if (!email || !password) {
-      alert('Please fill in all fields');
+      errorMessage = 'Please fill in all fields';
       return false;
     }
     if (password.length < PASSWORD_MIN_LENGTH) {
-      alert(`Password must be at least ${PASSWORD_MIN_LENGTH} characters`);
+      errorMessage = `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
       return false;
     }
     return true;
   }
 
   // Handle form submission
-  function handleSubmit(e: Event) {
+  async function handleSubmit(e: Event) {
     e.preventDefault();
+    errorMessage = ''; // Reset error message
+
     if (validateForm()) {
-      // Add your login logic here
-      console.log('Form submitted:', { email, rememberMe });
+      try {
+        const response = await fetch('http://localhost:3000/sign-in', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            subject: email,
+            password: password
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Successful login
+          console.log('Login successful:', data);
+          // Store token or user info if needed
+          // localStorage.setItem('token', data.token);
+          // Redirect to dashboard or home page
+          goto('/dashboard');
+        } else {
+          // Handle login error
+          errorMessage = data.message || 'Login failed';
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        errorMessage = 'An error occurred during login';
+      }
     }
   }
 </script>
@@ -42,6 +74,13 @@
       
       <!-- Login Form -->
       <form on:submit={handleSubmit} class="space-y-8">
+        <!-- Error Message -->
+        {#if errorMessage}
+          <div class="text-red-500 text-sm mb-4">
+            {errorMessage}
+          </div>
+        {/if}
+
         <!-- Input Fields Container -->
         <div class="flex gap-4">
           <!-- Email Field -->
@@ -69,7 +108,7 @@
               maxlength={PASSWORD_MAX_LENGTH}
               required
               class="w-full px-3 py-2.5 bg-[#fcfcfd] border-none rounded-md focus:ring-0"
-              placeholder="Enter your password"
+              placeholder="Password"
             />
           </div>
         </div>
@@ -128,17 +167,14 @@
 </main>
 
 <style>
-  /* Remove default focus outline and replace with custom styles */
   input {
     outline: none;
   }
 
-  /* Custom focus styles */
   input:focus {
     box-shadow: 0 0 0 2px rgba(0, 0, 128, 0.1);
   }
 
-  /* Ensure proper checkbox appearance across browsers */
   input[type="checkbox"] {
     accent-color: #00D001;
   }
