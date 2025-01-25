@@ -5,6 +5,7 @@
   </script>
   
   <MainPage />
+  Hello world
   <Benefits/>
   <Services/>
   
