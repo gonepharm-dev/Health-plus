@@ -50,7 +50,7 @@
     };
 </script>
 
-<div class="flex min-h-screen bg-gray-50"><!-- or any other gray shade you prefer -->
+<div class="flex min-h-screen text-gray-900 dark:text-white bg-gradient-to-br from-blue-100 to-blue-100 dark:from-gray-900 dark:to-gray-900 py-24"><!-- or any other gray shade you prefer -->
     <!-- Sidebar - Modified positioning -->
     <aside class="fixed lg:sticky top-0 h-screen w-[240px] border-r bg-white p-6 
         transform transition-transform duration-300 lg:translate-x-0 
@@ -111,7 +111,7 @@
         <!-- Main Content Area - Adjusted padding and margin -->
         <div class="p-4 lg:p-8 mt-16 lg:mt-0">
             <!-- Welcome Banner -->
-            <div class="bg-blue-100 rounded-2xl p-4 lg:p-6 mb-8">
+            <div class="bg-blue-400 rounded-2xl p-4 lg:p-6 mb-8">
                 <div class="flex items-center justify-between">
                     <div>
                         <h1 class="text-xl lg:text-2xl font-semibold mb-1">Welcome, John</h1>
@@ -125,28 +125,28 @@
             <!-- Statistics Grid -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <!-- Upcoming Appointments Stat -->
-                <div class="bg-blue-100 p-4 rounded-xl">
+                <div class="bg-blue-100 text-gray-100 dark:text-gray\ p-4 rounded-xl">
                     <div class="flex flex-col lg:flex-row lg:items-center gap-2">
                         <span class="text-xl lg:text-2xl font-semibold">{state.overview.upcomingAppointments}</span>
                         <span class="text-xs lg:text-sm">Upcoming Appointments</span>
                     </div>
                 </div>
                 <!-- Past Appointments Stat -->
-                <div class="bg-green-100 p-4 rounded-xl">
+                <div class="bg-green-100 dark:bg-green-900p-4 rounded-xl">
                     <div class="flex flex-col lg:flex-row lg:items-center gap-2">
                         <span class="text-xl lg:text-2xl font-semibold">{state.overview.pastAppointments}</span>
                         <span class="text-xs lg:text-sm">Past Appointments</span>
                     </div>
                 </div>
                 <!-- Active Prescriptions Stat -->
-                <div class="bg-purple-100 p-4 rounded-xl">
+                <div class="bg-purple-100 dark:bg-purple-900 p-4 rounded-xl">
                     <div class="flex flex-col lg:flex-row lg:items-center gap-2">
                         <span class="text-xl lg:text-2xl font-semibold">{state.overview.prescriptions}</span>
                         <span class="text-xs lg:text-sm">Active Prescriptions</span>
                     </div>
                 </div>
                 <!-- Medical Documents Stat -->
-                <div class="bg-indigo-100 p-4 rounded-xl">
+                <div class="bg-indigo-100 dark:bg-indigo-900 p-4 rounded-xl">
                     <div class="flex flex-col lg:flex-row lg:items-center gap-2">
                         <span class="text-xl lg:text-2xl font-semibold">{state.overview.documents}</span>
                         <span class="text-xs lg:text-sm">Medical Documents</span>
