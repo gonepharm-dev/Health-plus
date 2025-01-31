@@ -1,24 +1,2 @@
-# Pull Request: Frontend Sign-In Page Integration with Backend API
 
-## Summary
-This pull request integrates the frontend sign-in page with the backend authentication API, allowing users to securely log in. It includes API call integration, proper error handling, and user feedback for successful or failed login attempts.
-
-## Changes Implemented
-- Connected the frontend sign-in form to the backend authentication API.
-- Implemented API request handling for user authentication.
-- Added error handling for failed login attempts (e.g., incorrect credentials, server issues).
-- Provided user feedback for successful and failed login attempts.
-
-## How to Test
-1. Navigate to the sign-in page.
-2. Enter valid credentials and submit the form.
-3. Verify that the login is successful and the user is redirected appropriately.
-4. Enter incorrect credentials and ensure that an error message is displayed.
-5. Test for network failures and observe the proper error handling.
-
-## Related Issues
-- Closes #<Issue_Number> (if applicable)
-
-## Notes
-- Further enhancements may include improved UI/UX for login error messages and additional security measures such as rate limiting.
 
