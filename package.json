@@ -5,12 +5,10 @@
 	"type": "module",
 	"workspaces": [
 		"packages/*"
-	  ],
-	"scripts": {
-	},
-	"devDependencies": {
-	},
+	],
+	"scripts": {},
+	"devDependencies": {},
 	"dependencies": {
-
+		"express": "^4.21.2"
 	}
 }
