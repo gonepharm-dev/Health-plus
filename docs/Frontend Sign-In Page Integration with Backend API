@@ -1,2 +1,28 @@
+# Pull Request: Bind Frontend Sign-In Page with Backend API
+
+## Overview
+This pull request integrates the frontend sign-in page with the backend API, enabling secure and seamless user authentication. It establishes a connection between the UI and the authentication service, ensuring proper handling of login attempts.
+
+## Changes Implemented
+- Integrated API calls for user authentication.
+- Implemented error handling for failed login attempts.
+- Provided user feedback for successful or unsuccessful sign-ins.
+- Ensured secure transmission of credentials.
+
+## Testing
+- Tested successful login with valid credentials.
+- Verified error messages for incorrect username/password.
+- Checked UI responsiveness and loading states.
+- Ensured proper handling of network failures.
+
+## Dependencies
+- Ensure the backend authentication API is running and accessible.
+- Requires environment variables for API endpoints.
+
+## Related Issues
+- Closes #ISSUE_NUMBER (if applicable)
+
+## Notes
+- Future improvements may include multi-factor authentication (MFA) and session persistence.
 
 
