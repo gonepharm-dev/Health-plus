@@ -43,7 +43,6 @@ export const DeleteUser = async function(req:Request, res:Response, next:NextFun
             data:null
         })
     } catch (error) {
-        console.log(`Error :${error}`)
         return next(new AppError("Error deleting users", 500))
     }
 }
@@ -72,7 +71,6 @@ export const DeactivateAccount = async function(req:Request, res:Response, next:
             data: deactivate
         })
     } catch (error:any) {
-        console.log(`Error :${error.data}`)
         return next(new AppError("Error deactivating user", 500))
     }
 }
@@ -90,7 +88,6 @@ export const ActivateAccount = async function(req:Request, res:Response, next:Ne
 
         //decode the token
         const decodeToken = jwt.decode(token) as JwtPayload;
-        console.log(decodeToken.id);
 
         const activate =await DatabaseInstance.collection('users').update(decodeToken.id, {
             active: true
@@ -101,7 +98,6 @@ export const ActivateAccount = async function(req:Request, res:Response, next:Ne
             data: activate
         })
     } catch (error:any) {
-        console.log(`Error :${error.data}`)
         return next(new AppError("Error deactivating user", 500))
     }
 }
@@ -121,21 +117,18 @@ export const ProfilePicture = async function (req: any, res: Response, next: Nex
             return next(new AppError('You are not logged in', 401));
         }
 
-        // Decode and verify the token
         const decodedToken = jwt.decode(token) as JwtPayload;
 
         if (!decodedToken) {
             return next(new AppError('Invalid token or token expired', 401));
         }
 
-        // Retrieve the user from PocketBase based on the decoded token's id
         const userData = await DatabaseInstance.collection('users').getOne(decodedToken.id);
 
         if (!userData) {
             return next(new AppError('This user does not exist', 401));
         }
 
-        // Upload profile picture
         if (!file) {
             return next(new AppError('No file uploaded', 401));
         }
@@ -150,13 +143,20 @@ export const ProfilePicture = async function (req: any, res: Response, next: Nex
             'avatar': fileForPocketBase,
         });
 
+        // Construct the image URL
+        const imageUrl = `${process.env.DATABASE_URL_PROD}api/files/${updatedUser.collectionId}/${updatedUser.id}/${updatedUser.avatar}`;
+
+        const finalUpdatedUser = await DatabaseInstance.collection('users').update(decodedToken.id, {
+            imageUrl: imageUrl, 
+        });
+
         res.status(200).json({
             status: 'success',
             message: 'Profile picture updated successfully',
-            data: updatedUser,
+            data: finalUpdatedUser,
         });
     } catch (error: any) {
-        console.error('Error in ProfilePicture:', error.message || error); // Debugging
+        console.error('Error adding profile picture:', error);
         return next(new AppError('Error adding profile picture', 500));
     }
 };

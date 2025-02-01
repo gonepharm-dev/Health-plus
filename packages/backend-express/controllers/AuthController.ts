@@ -7,67 +7,73 @@ import DatabaseInstance from "../middlewares/database";
 
 dotenv.config();
 export const CreateUser = async function (req: Request, res: Response, next: NextFunction) {
-    try {
-        const { username, email, password, confirmPassword, role, active=true } = req.body;
+  try {
+      const { username, email, password, confirmPassword, role, active = true, contact_number, specialization, full_name } = req.body;
 
-        if (!username || !email || !password || !confirmPassword) {
-            return next(new AppError("username, email, password, and confirmPassword are required", 400));
-        }
+      if (!username || !email || !password || !confirmPassword) {
+          return next(new AppError("username, email, password, and confirmPassword are required", 400));
+      }
 
-        if (password !== confirmPassword) {
-            return next(new AppError("password and confirmPassword do not match", 400));
-        }
+      if (password !== confirmPassword) {
+          return next(new AppError("password and confirmPassword do not match", 400));
+      }
 
-        // Set default role to "user" if not provided
-        const userRole = role || "patient";
+      // Set default role to "patient" if not provided
+      const userRole = role || "patient";
 
-        // Validate role
-        const allowedRoles = ["admin", "patient", "doctor"];
+      // Validate role
+      const allowedRoles = ["admin", "patient", "doctor"];
 
-        if (!allowedRoles.includes(userRole)) {
-            return next(new AppError(`Invalid role.`, 400));
-        }
+      if (!allowedRoles.includes(userRole)) {
+          return next(new AppError(`Invalid role.`, 400));
+      }
 
-        // Create new user
-        const data = {
-            username,
-            email,
-            emailVisibility: true,
-            password: password,
-            passwordConfirm: password, 
-            role: userRole,
-            active
-        };
+      const data: any = {
+          username,
+          full_name,
+          email,
+          emailVisibility: true,
+          password: password,
+          passwordConfirm: password,
+          role: userRole,
+          active,
+          contact_number,
+      };
 
-        const newUser = await DatabaseInstance.collection("users").create(data);
+      // Add specialization only if the role is "doctor"
+      if (userRole === "doctor") {
+          if (!specialization) {
+              return next(new AppError("Specialization is required for Doctor role.", 400));
+          }
+          data.specialization = specialization;
+      }
 
-        // Respond with success
-        res.status(201).json({
-            status: "success",
-            data: newUser,
-        });
-    } catch (error: any) {
-        console.error("Error creating a user:", error.data);
+      const newUser = await DatabaseInstance.collection("users").create(data);
 
-        // Handle PocketBase validation errors
-        if (error?.data?.data) {
-            const errors = error.data.data;
-            let errorMessage = "Validation failed:";
+      // Respond with success
+      res.status(201).json({
+          status: "success",
+          data: newUser,
+      });
+  } catch (error: any) {
+      // Handle PocketBase validation errors
+      if (error?.data?.data) {
+          const errors = error.data.data;
+          let errorMessage = "Validation failed:";
 
-            if (errors.email?.code === "validation_invalid_email") {
-                errorMessage += " Email is invalid or already in use.";
-            }
-            if (errors.username?.code === "validation_invalid_username") {
-                errorMessage += " Username is invalid or already in use.";
-            }
+          if (errors.email?.code === "validation_invalid_email") {
+              errorMessage += " Email is invalid or already in use.";
+          }
+          if (errors.username?.code === "validation_invalid_username") {
+              errorMessage += " Username is invalid or already in use.";
+          }
 
-            return next(new AppError(errorMessage.trim(), 400));
-        }
+          return next(new AppError(errorMessage.trim(), 400));
+      }
 
-        return next(new AppError("Failed to create user. Please try again.", 500));
-    }
+      return next(new AppError("Failed to create user. Please try again.", 500));
+  }
 };
-
 export const EmailVerification = async (req: Request, res: Response, next: NextFunction) => {
   try {
       const { email } = req.body;
@@ -114,8 +120,6 @@ export const ConfirmEmailVerification = async (req: Request, res: Response, next
       // confirm email verification
       const verify = await DatabaseInstance.collection('users').confirmVerification(token);
 
-      console.log("Verification Response:", verify);
-
       res.status(200).json({
           status: "success",
           message: "Email verified",
@@ -138,6 +142,17 @@ export const LoginUser = async function (req: Request, res: Response, next: Next
       if (!email || !password) {
         return next(new AppError("Email and password are required", 400));
       }
+
+      // get user from the database
+      const currentUser = await DatabaseInstance.collection('users').getFirstListItem(`email="${email}"`);
+
+      if(!currentUser){
+        return next(new AppError("User not found", 404))
+      }
+
+      if(!currentUser.active){
+        return next(new AppError("You must activate your account", 402))
+      }
   
       const authData = await DatabaseInstance.collection('users').authWithPassword(email, password);
   
@@ -150,15 +165,12 @@ export const LoginUser = async function (req: Request, res: Response, next: Next
     } catch (error: any) {
       // Handle 403 (authentication requirements failed)
       if (error?.status === 403) {
-        console.log(`Error ${error}`)
         return next(new AppError(`Invalid credentials or unverified email`, 403));
       }
 
       if (error?.status === 404) {
         return next(new AppError("User not found", 404));
       }
-      // General error
-      console.error("Login error (full):", error); 
       return next(new AppError("Login failed", 500));
     }
   };
@@ -195,7 +207,6 @@ export const protect = async (req: any, res: Response, next: NextFunction) => {
 
     next();
   } catch (error:any) {
-    console.error(error.data);
     return next(new AppError('Error protecting route',500));
   }
 };
@@ -233,7 +244,6 @@ export const PasswordReset = async function (req: Request, res: Response, next: 
       data: sendToken
     });
   } catch (error: any) {
-    console.error("Password reset error:", error.message);
     return next(new AppError("Something went wrong, please try again", 500));
   }
 };
@@ -274,7 +284,6 @@ export const ConfirmPasswordReset = async function (req: Request, res: Response,
       data: null
     });
   } catch (error: any) {
-    console.error("Password reset confirmation error:", error);
     return next(new AppError("Something went wrong, please try again", 500));
   }
 };
