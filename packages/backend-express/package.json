@@ -5,7 +5,7 @@
   "scripts": {
     "clean": "rm -rf dist && echo 'Done.'",
     "dev": "NODE_ENV=development bun --watch run App.ts",
-    "prod": "NODE_ENV=production bun run App.ts"
+    "prod": "NODE_ENV=production bun --watch run App.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
