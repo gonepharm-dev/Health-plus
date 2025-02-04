@@ -16,7 +16,7 @@ Manages all users in the system, including doctors, patients, and admins.
 | full_name       | Text     | Yes      | No     | User's full name |
 | profile_picture | File     | No       | No     | Profile image |
 | specialization  | Text     | No       | No     | Only for doctors, area of specialization |
-| contact_number  | Text     | No       | No     | Phone number |
+| contact_number  | Number   | No       | No     | Phone number |
 
 ---
 ### 2. Appointments Collection
