@@ -115,12 +115,3 @@ To implement this **PocketHost schema**, follow these steps:
    - Use **Docker** or deploy on a cloud VM (AWS, DigitalOcean, etc.)
    - Set up a **reverse proxy** (Nginx) for security
 
-## Summary of Changes in Pull Request
-- **Updated database schema** to match **PocketHost** instead of PocketBase 🎯
-- **Removed wallet-related fields** as per the latest revision ❌
-- **Updated port configuration** to reflect the new setup 🔧
-- **Documented deployment steps** for the PocketHost environment 📄
-
----
-This documentation ensures the team understands the database structure and deployment process for the **Health Plus** MVP. 🚀
-
