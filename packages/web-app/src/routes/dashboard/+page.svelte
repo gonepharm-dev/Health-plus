@@ -1,199 +1,239 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import { fade } from 'svelte/transition';
+  // Import necessary icons/components
+  import { Calendar, MessageSquare, FileText, History, ChevronUp, User, Bell, Settings, Menu } from 'lucide-svelte';
 
-    // State Management
-    let isSidebarOpen = false;
+  // Get current date for calendar
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  
+  // Get days in current month
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  
+  // Get first day of month
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+  
+  // Create calendar days array
+  const calendarDays = Array(42).fill(null).map((_, index) => {
+    const dayNumber = index - firstDayOfMonth + 1;
+    if (dayNumber > 0 && dayNumber <= daysInMonth) {
+      return dayNumber;
+    }
+    return null;
+  });
 
-    // Mock Data State
-    let state = {
-        overview: {
-            upcomingAppointments: 2,
-            pastAppointments: 8,
-            prescriptions: 3,
-            documents: 12
-        },
-        upcomingAppointments: [
-            {
-                doctorName: "Dr. Sarah Johnson",
-                specialty: "Endocrinologist",
-                description: "Follow-up consultation for diabetes management",
-                time: "10:30 AM",
-                isConfirmed: true,
-                thumbnail: "/confident-professional-man-stockcake.webp"
-            },
-            {
-                doctorName: "Dr. Michael Chen",
-                specialty: "Physical Therapist",
-                description: "Initial consultation for chronic back pain",
-                time: "2:15 PM",
-                isConfirmed: false,
-                thumbnail: "/confident-professional-man-stockcake.webp"
-            },
-            {
-                doctorName: "Dr. Sarah Johnson",
-                specialty: "Endocrinologist",
-                description: "Follow-up consultation for diabetes management",
-                time: "10:30 AM",
-                isConfirmed: true,
-                thumbnail: "/confident-professional-man-stockcake.webp"
-            },
-            {
-                doctorName: "Dr. Michael Chen",
-                specialty: "Physical Therapist",
-                description: "Initial consultation for chronic back pain",
-                time: "2:15 PM",
-                isConfirmed: false,
-                thumbnail: "/confident-professional-man-stockcake.webp"
-            }
-        ]
-    };
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  // Sample appointments data
+  const appointments = [
+    { date: 15, time: "09:00 AM", doctor: "Dr. John Smith", type: "Check-up" },
+    { date: 18, time: "02:30 PM", doctor: "Dr. Sarah Johnson", type: "Follow-up" },
+    { date: today.getDate(), time: "11:00 AM", doctor: "Dr. Mike Wilson", type: "Consultation" }
+  ];
+
+  // Mobile menu state
+  let isMobileMenuOpen = false;
 </script>
 
-<div class="flex min-h-screen text-gray-900 dark:text-white bg-gradient-to-br from-blue-100 to-blue-100 dark:from-gray-900 dark:to-gray-900 py-24"><!-- or any other gray shade you prefer -->
-    <!-- Sidebar - Modified positioning -->
-    <aside class="fixed lg:sticky top-0 h-screen w-[240px] border-r bg-white p-6 
-        transform transition-transform duration-300 lg:translate-x-0 
-        {isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:block z-20">
-        <!-- Logo Section -->
-        <div class="flex items-center gap-2 mb-8">
-            
-            <span class="text-xl font-semibold">HealthPlus</span>
-        </div>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-2 sm:p-4">
+  <div class="h-full max-w-7xl mx-auto flex flex-col">
+    <!-- Top Navigation Bar -->
+    <div class="flex justify-between items-center mb-4 bg-white rounded-xl p-3 shadow-lg">
+      <div class="flex items-center gap-3">
+        <button 
+          class="lg:hidden p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+          on:click={() => isMobileMenuOpen = !isMobileMenuOpen}
+        >
+          <Menu class="w-5 h-5" />
+        </button>
+        <img src="/logo.png" alt="Logo" class="h-8 w-auto" />
+        <h1 class="text-xl font-bold text-gray-900 hidden sm:block">Patient Portal</h1>
+      </div>
+      
+      <div class="flex items-center gap-2 sm:gap-4">
+        <button class="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg">
+          <Bell class="w-5 h-5" />
+        </button>
+        <button class="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg">
+          <Settings class="w-5 h-5" />
+        </button>
+        <button class="flex items-center gap-2 px-2 sm:px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700">
+          <User class="w-4 h-4" />
+          <span class="text-sm hidden sm:inline">Profile</span>
+        </button>
+      </div>
+    </div>
 
-        <!-- Navigation Links -->
-        <div class="space-y-4">
-            <!-- Quick Action Button -->
-            <button class="flex items-center gap-2 text-blue-600 font-medium">
-                <span class="text-2xl">+</span>
-                Book Appointment
-            </button>
-
-            <!-- Main Navigation Menu -->
-            <nav class="space-y-2">
-                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Dashboard</a>
-                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Appointments</a>
-                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Medical Records</a>
-                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Prescriptions</a>
-                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Messages</a>
-            </nav>
-        </div>
-
-        <!-- Bottom Action Button -->
-        <div class="absolute bottom-6 left-6 right-6">
-            <button class="w-full py-2 text-blue-600 border border-blue-600 rounded-lg">
-                Start Virtual Visit
-            </button>
-        </div>
-    </aside>
-
-    <!-- Main Content Wrapper - Modified structure -->
-    <main class="flex-1 w-full lg:ml-0">
-        <!-- Mobile Header -->
-        <div class="lg:hidden fixed top-0 left-0 right-0 bg-white p-4 border-b z-10">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <img src="/healthplus-logo.png" alt="HealthPlus" class="h-6">
-                    <span class="text-lg font-semibold">HealthPlus</span>
+    <div class="flex-1 lg:grid lg:grid-cols-[240px,1fr] gap-4 min-h-0">
+      <!-- Left Sidebar - Mobile Overlay -->
+      <div class={`lg:hidden fixed inset-0 bg-gray-600 bg-opacity-75 z-20 transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div class={`fixed inset-y-0 left-0 w-64 bg-white transform transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div class="p-4 space-y-4">
+            <!-- Mobile Sidebar Content -->
+            {#if isMobileMenuOpen}
+              <button class="absolute top-2 right-2 p-2 text-gray-600" on:click={() => isMobileMenuOpen = false}>
+                ✕
+              </button>
+              <!-- User Profile -->
+              <div class="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white text-lg font-bold">
+                  JD
                 </div>
-                <!-- Mobile Menu Toggle Button -->
-                <button 
-                    class="p-2 hover:bg-gray-100 rounded-lg"
-                    on:click={() => isSidebarOpen = !isSidebarOpen}
-                >
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
+                <div>
+                  <p class="font-medium text-gray-900 text-sm">Welcome back,</p>
+                  <p class="text-lg text-indigo-600 font-semibold">Jane Doe</p>
+                  <p class="text-xs text-gray-600">Patient</p>
+                </div>
+              </div>
+
+              <!-- Navigation Menu -->
+              <nav class="space-y-2">
+                <button class="w-full p-3 text-left bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg flex items-center gap-2 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-sm hover:shadow-md text-sm">
+                  <MessageSquare class="w-4 h-4" />
+                  <span class="font-medium">Messages</span>
                 </button>
+
+                <button class="w-full p-3 text-left bg-white text-gray-700 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition-all border border-gray-200 text-sm">
+                  <Calendar class="w-4 h-4" />
+                  <span class="font-medium">Schedule Visit</span>
+                </button>
+
+                <button class="w-full p-3 text-left bg-white text-gray-700 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition-all border border-gray-200 text-sm">
+                  <FileText class="w-4 h-4" />
+                  <span class="font-medium">Medical Records</span>
+                </button>
+
+                <button class="w-full p-3 text-left bg-white text-gray-700 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition-all border border-gray-200 text-sm">
+                  <History class="w-4 h-4" />
+                  <span class="font-medium">Visit History</span>
+                </button>
+
+                <button class="w-full p-3 text-left bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg flex items-center gap-2 hover:from-pink-600 hover:to-rose-600 transition-all shadow-sm hover:shadow-md text-sm">
+                  <ChevronUp class="w-4 h-4" />
+                  <span class="font-medium">Upgrade Care Plan</span>
+                </button>
+              </nav>
+            {/if}
+          </div>
+        </div>
+      </div>
+
+      <!-- Left Sidebar - Desktop -->
+      <div class="hidden lg:block mb-4 lg:mb-0">
+        <div class="bg-white rounded-xl shadow-lg p-4 space-y-4 h-full">
+          <!-- User Profile -->
+          <div class="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg">
+            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white text-lg font-bold">
+              JD
             </div>
+            <div>
+              <p class="font-medium text-gray-900 text-sm">Welcome back,</p>
+              <p class="text-lg text-indigo-600 font-semibold">Jane Doe</p>
+              <p class="text-xs text-gray-600">Patient</p>
+            </div>
+          </div>
+
+          <!-- Navigation Menu -->
+          <nav class="space-y-2">
+            <button class="w-full p-3 text-left bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg flex items-center gap-2 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-sm hover:shadow-md text-sm">
+              <MessageSquare class="w-4 h-4" />
+              <span class="font-medium">Messages</span>
+            </button>
+
+            <button class="w-full p-3 text-left bg-white text-gray-700 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition-all border border-gray-200 text-sm">
+              <Calendar class="w-4 h-4" />
+              <span class="font-medium">Schedule Visit</span>
+            </button>
+
+            <button class="w-full p-3 text-left bg-white text-gray-700 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition-all border border-gray-200 text-sm">
+              <FileText class="w-4 h-4" />
+              <span class="font-medium">Medical Records</span>
+            </button>
+
+            <button class="w-full p-3 text-left bg-white text-gray-700 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition-all border border-gray-200 text-sm">
+              <History class="w-4 h-4" />
+              <span class="font-medium">Visit History</span>
+            </button>
+
+            <button class="w-full p-3 text-left bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg flex items-center gap-2 hover:from-pink-600 hover:to-rose-600 transition-all shadow-sm hover:shadow-md text-sm">
+              <ChevronUp class="w-4 h-4" />
+              <span class="font-medium">Upgrade Care Plan</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Calendar Section -->
+      <div class="grid grid-rows-[auto,1fr] gap-4">
+        <div class="bg-white rounded-xl p-4 shadow-lg">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Upcoming Visits</h2>
+              <p class="text-sm text-gray-500">{monthNames[currentMonth]} {currentYear}</p>
+            </div>
+            <button class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-sm hover:shadow-md text-sm">
+              <span class="font-medium">Start Virtual Visit</span>
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 12L9 8V16L15 12Z" fill="currentColor"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Calendar Grid -->
+          <div class="rounded-lg border border-gray-200 p-2 bg-gray-50 overflow-x-auto">
+            <div class="grid grid-cols-7 gap-1 mb-1 min-w-[280px]">
+              {#each ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as day}
+                <div class="text-center font-medium text-gray-600 text-xs">{day}</div>
+              {/each}
+            </div>
+
+            <div class="grid grid-cols-7 gap-0.5 min-w-[280px]">
+              {#each calendarDays as day}
+                {#if day === null}
+                  <div class="aspect-square h-6"></div>
+                {:else}
+                  <button class="relative aspect-square h-6 text-xs hover:bg-blue-50 rounded-lg transition-all
+                    {day === today.getDate() ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-700'}
+                    {appointments.some(apt => apt.date === day) ? 'ring-1 ring-blue-400' : ''}">
+                    {day}
+                    {#if appointments.some(apt => apt.date === day)}
+                      <div class="absolute bottom-0.5 left-1/2 transform -translate-x-1/2">
+                        <div class="w-1 h-1 bg-blue-500 rounded-full"></div>
+                      </div>
+                    {/if}
+                  </button>
+                {/if}
+              {/each}
+            </div>
+          </div>
         </div>
 
-        <!-- Main Content Area - Adjusted padding and margin -->
-        <div class="p-4 lg:p-8 mt-16 lg:mt-0">
-            <!-- Welcome Banner -->
-            <div class="bg-blue-400 rounded-2xl p-4 lg:p-6 mb-8">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-xl lg:text-2xl font-semibold mb-1">Welcome, John</h1>
-                        <p class="text-sm lg:text-base text-gray-600">
-                            You have {state.overview.upcomingAppointments} upcoming appointments
-                        </p>
-                    </div>
+        <!-- Today's Appointments -->
+        <div class="bg-white rounded-xl p-4 shadow-lg overflow-auto">
+          <h3 class="text-lg font-bold text-gray-900 mb-4">Today's Visits</h3>
+          <div class="space-y-2">
+            {#each appointments.filter(apt => apt.date === today.getDate()) as appointment}
+              <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <div>
+                    <p class="font-medium text-gray-900 text-sm">{appointment.doctor}</p>
+                    <p class="text-xs text-gray-500">{appointment.type}</p>
+                  </div>
+                  <p class="text-blue-600 font-medium text-sm">{appointment.time}</p>
                 </div>
-            </div>
-
-            <!-- Statistics Grid -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <!-- Upcoming Appointments Stat -->
-                <div class="bg-blue-100 text-gray-100 dark:text-gray\ p-4 rounded-xl">
-                    <div class="flex flex-col lg:flex-row lg:items-center gap-2">
-                        <span class="text-xl lg:text-2xl font-semibold">{state.overview.upcomingAppointments}</span>
-                        <span class="text-xs lg:text-sm">Upcoming Appointments</span>
-                    </div>
-                </div>
-                <!-- Past Appointments Stat -->
-                <div class="bg-green-100 dark:bg-green-900p-4 rounded-xl">
-                    <div class="flex flex-col lg:flex-row lg:items-center gap-2">
-                        <span class="text-xl lg:text-2xl font-semibold">{state.overview.pastAppointments}</span>
-                        <span class="text-xs lg:text-sm">Past Appointments</span>
-                    </div>
-                </div>
-                <!-- Active Prescriptions Stat -->
-                <div class="bg-purple-100 dark:bg-purple-900 p-4 rounded-xl">
-                    <div class="flex flex-col lg:flex-row lg:items-center gap-2">
-                        <span class="text-xl lg:text-2xl font-semibold">{state.overview.prescriptions}</span>
-                        <span class="text-xs lg:text-sm">Active Prescriptions</span>
-                    </div>
-                </div>
-                <!-- Medical Documents Stat -->
-                <div class="bg-indigo-100 dark:bg-indigo-900 p-4 rounded-xl">
-                    <div class="flex flex-col lg:flex-row lg:items-center gap-2">
-                        <span class="text-xl lg:text-2xl font-semibold">{state.overview.documents}</span>
-                        <span class="text-xs lg:text-sm">Medical Documents</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Appointments List -->
-            <div class="space-y-4">
-                {#each state.upcomingAppointments as appointment}
-                    <div class="bg-white p-4 rounded-xl flex flex-col lg:flex-row lg:items-center gap-4">
-                        <!-- Doctor's Image -->
-                        <img src={appointment.thumbnail} alt={appointment.doctorName} class="w-12 h-12 lg:w-16 lg:h-16 rounded-full object-cover">
-                        <!-- Appointment Details -->
-                        <div class="flex-1">
-                            <h3 class="font-semibold">{appointment.doctorName}</h3>
-                            <p class="text-sm text-blue-600">{appointment.specialty}</p>
-                            <p class="text-sm text-gray-500">{appointment.description}</p>
-                            <p class="text-sm text-gray-400">Appointment time: {appointment.time}</p>
-                        </div>
-                        <!-- Appointment Status and Actions -->
-                        <div class="flex items-center justify-between lg:justify-end w-full lg:w-auto gap-4">
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm">{appointment.isConfirmed ? 'Confirmed' : 'Pending'}</span>
-                                <div class="w-12 h-6 bg-gray-200 rounded-full relative">
-                                    <div class={`absolute w-5 h-5 rounded-full top-0.5 transition-all
-                                        ${appointment.isConfirmed ? 'bg-green-600 right-0.5' : 'bg-gray-400 left-0.5'}`}>
-                                    </div>
-                                </div>
-                            </div>
-                            <button class="p-2 hover:bg-gray-100 rounded-full">
-                                <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                {/each}
-            </div>
+              </div>
+            {/each}
+          </div>
         </div>
-    </main>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Mobile Overlay -->
-{#if isSidebarOpen}
-    <div 
-        class="fixed inset-0 bg-black bg-opacity-50 lg:hidden z-10"
-        on:click={() => isSidebarOpen = false}
-    ></div>
-{/if}
+<style>
+  @media (max-width: 1024px) {
+    .max-w-7xl {
+      max-width: 100%;
+    }
+  }
+</style>
