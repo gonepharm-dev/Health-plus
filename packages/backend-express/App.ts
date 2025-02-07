@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import AppError from './utils/AppError';
 
 import userRoute from './routes/userRoute';
+import appointRoute from './routes/appointmentRoute'
 
 const app = express();
 const PORT = 3001;
@@ -19,6 +20,7 @@ app.use(cors());
 
 // Routing
 app.use('/api/collections/users', userRoute);
+app.use('/api/realtime', appointRoute);
 
 // Base route
 app.get('/', (req: Request, res: Response) => {
