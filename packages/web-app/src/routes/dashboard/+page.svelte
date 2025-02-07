@@ -1,6 +1,6 @@
 <script lang="ts">
   // Import necessary icons/components
-  import { Calendar, MessageSquare, FileText, History, ChevronUp, User, Bell, Settings, Menu } from 'lucide-svelte';
+  import { Calendar, MessageSquare, FileText, History, ChevronUp, User, Bell, Settings, Menu, BookOpen } from 'lucide-svelte';
 
   // Get current date for calendar
   const today = new Date();
@@ -108,6 +108,11 @@
                   <span class="font-medium">Visit History</span>
                 </button>
 
+                <button class="w-full p-3 text-left bg-white text-gray-700 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition-all border border-gray-200 text-sm">
+                  <BookOpen class="w-4 h-4" />
+                  <span class="font-medium">Book Appointment</span>
+                </button>
+
                 <button class="w-full p-3 text-left bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg flex items-center gap-2 hover:from-pink-600 hover:to-rose-600 transition-all shadow-sm hover:shadow-md text-sm">
                   <ChevronUp class="w-4 h-4" />
                   <span class="font-medium">Upgrade Care Plan</span>
@@ -135,25 +140,30 @@
 
           <!-- Navigation Menu -->
           <nav class="space-y-2">
-            <button class="w-full p-3 text-left bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg flex items-center gap-2 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-sm hover:shadow-md text-sm">
-              <MessageSquare class="w-4 h-4" />
-              <span class="font-medium">Messages</span>
-            </button>
-
-            <button class="w-full p-3 text-left bg-white text-gray-700 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition-all border border-gray-200 text-sm">
-              <Calendar class="w-4 h-4" />
-              <span class="font-medium">Schedule Visit</span>
-            </button>
-
+            <a href="/messages">
+              <button class="w-full p-3 text-left bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg flex items-center gap-2 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-sm hover:shadow-md text-sm">
+                <MessageSquare class="w-4 h-4" />
+                <span class="font-medium">Messages</span>
+              </button>
+            </a>
+            <a href="/records">
             <button class="w-full p-3 text-left bg-white text-gray-700 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition-all border border-gray-200 text-sm">
               <FileText class="w-4 h-4" />
               <span class="font-medium">Medical Records</span>
             </button>
+            </a>
 
             <button class="w-full p-3 text-left bg-white text-gray-700 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition-all border border-gray-200 text-sm">
               <History class="w-4 h-4" />
               <span class="font-medium">Visit History</span>
             </button>
+
+            <a href="/appointment">
+            <button class="w-full p-3 text-left bg-white text-gray-700 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition-all border border-gray-200 text-sm">
+              <BookOpen class="w-4 h-4" />
+              <span class="font-medium">Book Appointment</span>
+            </button>
+          </a>
 
             <button class="w-full p-3 text-left bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg flex items-center gap-2 hover:from-pink-600 hover:to-rose-600 transition-all shadow-sm hover:shadow-md text-sm">
               <ChevronUp class="w-4 h-4" />

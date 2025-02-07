@@ -15,11 +15,6 @@
     // Implement Google sign-in logic here
     console.log('Google sign-in clicked');
   };
-
-  const handleMicrosoftSignIn = async () => {
-    // Implement Microsoft sign-in logic here
-    console.log('Microsoft sign-in clicked');
-  };
 </script>
 
 <div class="min-h-screen bg-blue-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -58,19 +53,6 @@
                 />
               </svg>
               Continue with Google
-            </button>
-
-            <button 
-              on:click={handleMicrosoftSignIn}
-              class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <svg class="w-5 h-5 mr-2" viewBox="0 0 23 23">
-                <path fill="#f25022" d="M1 1h9v9H1z" />
-                <path fill="#00a4ef" d="M1 12h9v9H1z" />
-                <path fill="#7fba00" d="M12 1h9v9h-9z" />
-                <path fill="#ffb900" d="M12 12h9v9h-9z" />
-              </svg>
-              Continue with Microsoft
             </button>
           </div>
 

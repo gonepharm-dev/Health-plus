@@ -1,108 +1,257 @@
 <script lang="ts">
-  import { MessageSquare } from 'lucide-svelte';
+  import { fade, slide } from 'svelte/transition';
+  import { quintOut } from 'svelte/easing';
+  import { MessageSquare, Paperclip, Smile, Send, Search, MoreVertical, Phone, Video } from 'lucide-svelte';
+  import type { Chat, Message } from './types';
 
-  // Sample message history data
-  interface Message {
-    id: string;
-    senderId: string;
-    receiverId: string;
-    content: string;
-    timestamp: string;
-  }
+  let selectedChat: number | null = 2;
+  let searchQuery = '';
+  let newMessage = '';
+  let messageRef: HTMLDivElement;
 
-  interface User {
-    id: string;
-    name: string;
-    avatar: string;
-    role: string;
-  }
-
-  const currentUser = {
-    id: 'patient-1',
-    name: 'Jane Doe',
-    avatar: '/avatar-placeholder.png',
-    role: 'Patient'
-  };
-
-  const users: User[] = [
+  let chats: Chat[] = [
     {
-      id: 'doc-1',
-      name: 'Dr Rose Jane',
-      avatar: '/doctor-avatar.png', 
-      role: 'Doctor'
+      id: 1,
+      name: 'Oleg Rhatrov',
+      lastMessage: 'Is the plan of the general meeting already known?',
+      time: 'Now',
+      avatar: '/prof1.jpeg',
+      online: true,
+      unread: true,
+      status: 'available'
+    },
+    {
+      id: 2,
+      name: 'Regina Polyakova',
+      lastMessage: 'Oh, there is such a bunch of emails. I just...',
+      time: '15m',
+      avatar: '/prof2.jpeg',
+      online: true,
+      unread: false,
+      status: 'busy'
+    },
+    {
+      id: 3,
+      name: 'Yakov Shaikin',
+      lastMessage: 'I came up with this idea after visiting an exhibition...',
+      time: '2h',
+      avatar: '/prof3.jpeg',
+      online: false,
+      unread: true,
+      status: 'away'
     }
   ];
 
-  const messages: Message[] = [
+  let messages: Message[] = [
     {
-      id: '1',
-      senderId: 'doc-1',
-      receiverId: 'patient-1',
-      content: 'Hello, how are you feeling today?',
-      timestamp: '10:00am'
+      id: 1,
+      sender: 'Regina Polyakova',
+      content: 'Hello! Have you already prepared financial statements for the first month? I need this in analytics. Tomorrow it will be really nice to discuss all the documents and hand them over to the customer at the meeting.',
+      time: 'Today, 06:30 pm',
+      isOwn: false
     },
     {
-      id: '2',
-      senderId: 'patient-1',
-      receiverId: 'doc-1',
-      content: 'Much better, thank you for asking!',
-      timestamp: '10:00am'
-    },
-    {
-      id: '3',
-      senderId: 'doc-1',
-      receiverId: 'patient-1',
-      content: 'That's great to hear. Remember to take your medications.',
-      timestamp: '10:00am'
-    },
-    {
-      id: '4',
-      senderId: 'patient-1',
-      receiverId: 'doc-1',
-      content: 'Yes, I will. Thanks doctor!',
-      timestamp: '10:00am'
+      id: 2,
+      sender: 'You',
+      content: "Hi, of course I've made it! I sent you all the documents two days ago by email. This is what happens when you do not read messages for several days. But it's ok, now you got them! Here:",
+      time: 'Today, 10:11 pm',
+      isOwn: true,
+      attachment: {
+        name: 'finalrep.doc',
+        size: '2.3 MB',
+        type: 'document'
+      }
     }
   ];
 
-  let selectedUserId: string | null = null;
-  let newMessage: string = '';
-
-  function selectUser(userId: string) {
-    selectedUserId = userId;
+  function handleSendMessage() {
+    if (newMessage.trim()) {
+      messages.push({
+        id: messages.length + 1,
+        sender: 'You',
+        content: newMessage,
+        time: 'Just now',
+        isOwn: true
+      });
+      newMessage = '';
+      setTimeout(() => {
+        messageRef?.scrollTo({ top: messageRef.scrollHeight, behavior: 'smooth' });
+      }, 100);
+    }
   }
 
-  function getMessagesByUser(userId: string) {
-    return messages.filter(
-      msg => (msg.senderId === userId && msg.receiverId === currentUser.id) ||
-             (msg.senderId === currentUser.id && msg.receiverId === userId)
-    );
+  function getStatusColor(status: Chat['status']) {
+    switch (status) {
+      case 'available':
+        return 'bg-green-400';
+      case 'busy':
+        return 'bg-red-400';
+      case 'away':
+        return 'bg-yellow-400';
+      default:
+        return 'bg-gray-400';
+    }
   }
+
+  $: filteredChats = chats.filter(chat => 
+    chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
-  <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-    <div class="grid grid-cols-[300px,1fr] h-[600px]">
-      <!-- Users List -->
-      <div class="border-r border-gray-200 overflow-y-auto">
-        <div class="p-4 border-b border-gray-200">
-          <h2 class="text-lg font-bold text-gray-900">Messages</h2>
+<div class="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
+  <!-- Left Sidebar -->
+  <div class="w-80 bg-white/80 backdrop-blur-lg border-r border-gray-200/50 flex flex-col shadow-lg rounded-r-xl overflow-hidden">
+    <!-- Search Header -->
+    <div class="p-6 border-b border-gray-200/50 bg-white/50">
+      <div class="relative">
+        <input
+          type="text"
+          placeholder="Search messages..."
+          class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-100/50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all placeholder-gray-400 text-gray-700"
+          bind:value={searchQuery}
+        />
+        <div class="absolute left-3 top-3 text-gray-400">
+          <Search size={18} />
         </div>
-        <div class="divide-y divide-gray-200">
-          {#each users as user}
-            <button
-              class="w-full p-4 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left"
-              class:bg-blue-50={selectedUserId === user.id}
-              on:click={() => selectUser(user.id)}
-            >
-              <div class="relative w-12 h-12">
-                <img 
-                  src={user.avatar} 
-                  alt={user.name} 
-                  class="w-full h-full rounded-full object-cover border-2 border-gray-200"
-                />
-                <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+      </div>
+    </div>
+
+    <!-- Chat List -->
+    <div class="flex-1 overflow-y-auto p-4">
+      {#each filteredChats as chat (chat.id)}
+        <div
+          transition:slide
+          class="flex items-center p-3 cursor-pointer hover:bg-gray-50/50 rounded-lg transition-colors duration-200
+          {selectedChat === chat.id ? 'bg-blue-50/50 hover:bg-blue-50/50' : ''}"
+          on:click={() => selectedChat = chat.id}
+        >
+          <div class="relative">
+            <img
+              src={chat.avatar}
+              alt={chat.name}
+              class="w-10 h-10 rounded-full object-cover shadow-sm"
+            />
+            <div class="absolute bottom-0 right-0 w-3 h-3 {getStatusColor(chat.status)} rounded-full border-2 border-white"/>
+          </div>
+          <div class="ml-3 flex-1">
+            <div class="flex justify-between items-start">
+              <span class="font-semibold text-gray-900">{chat.name}</span>
+              <span class="text-xs text-gray-500">{chat.time}</span>
+            </div>
+            <p class="text-sm text-gray-500 truncate mt-0.5">{chat.lastMessage}</p>
+          </div>
+          {#if chat.unread}
+            <div class="w-2 h-2 bg-blue-500 rounded-full ml-2"/>
+          {/if}
+        </div>
+      {/each}
+    </div>
+  </div>
+
+  <!-- Main Chat Area -->
+  <div class="flex-1 flex flex-col bg-white/80 backdrop-blur-lg rounded-l-xl shadow-lg overflow-hidden">
+    <!-- Chat Header -->
+    <div class="flex items-center p-6 border-b border-gray-200/50 bg-white/50">
+      <img
+        src="/prof1.jpeg"
+        alt="Current chat"
+        class="w-10 h-10 rounded-full object-cover shadow-sm"
+      />
+      <div class="ml-3 flex-1">
+        <h2 class="font-semibold text-gray-900">Regina Polyakova</h2>
+        <p class="text-sm text-green-500">Online</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <button class="p-2 hover:bg-gray-100/50 rounded-full transition-colors">
+          <Phone size={20} class="text-gray-600" />
+        </button>
+        <button class="p-2 hover:bg-gray-100/50 rounded-full transition-colors">
+          <Video size={20} class="text-gray-600" />
+        </button>
+        <button class="p-2 hover:bg-gray-100/50 rounded-full transition-colors">
+          <MoreVertical size={20} class="text-gray-600" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages Area -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/50" bind:this={messageRef}>
+      {#each messages as message (message.id)}
+        <div
+          class="flex {message.isOwn ? 'justify-end' : 'justify-start'}"
+          transition:fade={{ duration: 200 }}
+        >
+          <div class="max-w-[70%] {message.isOwn ? 'bg-blue-500 text-white' : 'bg-white'} 
+            rounded-2xl p-4 shadow-sm backdrop-blur-lg">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-sm font-medium {message.isOwn ? 'text-blue-100' : 'text-gray-600'}">
+                {message.sender}
+              </span>
+              <span class="text-xs {message.isOwn ? 'text-blue-100' : 'text-gray-500'}">
+                {message.time}
+              </span>
+            </div>
+            <p class="text-sm leading-relaxed">{message.content}</p>
+            {#if message.attachment}
+              <div class="mt-3 bg-white/10 backdrop-blur-sm rounded-xl p-3 flex items-center gap-2 
+                {message.isOwn ? 'text-white' : 'text-gray-700'}">
+                <Paperclip size={16} />
+                <div class="flex flex-col">
+                  <span class="text-sm font-medium">{message.attachment.name}</span>
+                  {#if message.attachment.size}
+                    <span class="text-xs opacity-75">{message.attachment.size}</span>
+                  {/if}
+                </div>
               </div>
-              <div>
-                <p class="font-medium text-gray-900">{user.name}</p>
-                <p class="text-sm text-gray-500">{user.role}</p>
-              </div>
+            {/if}
+          </div>
+        </div>
+      {/each}
+    </div>
+
+    <!-- Message Input -->
+    <div class="p-6 border-t border-gray-200/50 bg-white/50">
+      <div class="flex items-center gap-3">
+        <button class="p-2 hover:bg-gray-100/50 rounded-full transition-colors">
+          <Paperclip size={20} class="text-gray-500" />
+        </button>
+        <input
+          type="text"
+          placeholder="Type your message..."
+          class="flex-1 p-3 rounded-xl bg-gray-100/50 focus:outline-none focus:ring-2 focus:ring-blue-400 
+            transition-all text-gray-700 placeholder-gray-500"
+          bind:value={newMessage}
+          on:keypress={(e) => e.key === 'Enter' && handleSendMessage()}
+        />
+        <button class="p-2 hover:bg-gray-100/50 rounded-full transition-colors">
+          <Smile size={20} class="text-gray-500" />
+        </button>
+        <button 
+          class="p-2 bg-blue-500 hover:bg-blue-600 rounded-full transition-colors"
+          on:click={handleSendMessage}
+        >
+          <Send size={20} class="text-white" />
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+  }
+</style>
