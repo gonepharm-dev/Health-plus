@@ -1,0 +1,69 @@
+{
+  "collections": [
+    {
+      "name": "users",
+      "schema": [
+        { "name": "username", "type": "text", "required": true },
+        { "name": "email", "type": "email", "required": true, "unique": true },
+        { "name": "password", "type": "password", "required": true },
+        { "name": "role", "type": "select", "options": { "choices": ["doctor", "patient", "admin"] }, "required": true },
+        { "name": "full_name", "type": "text", "required": true },
+        { "name": "profile_picture", "type": "file" },
+        { "name": "specialization", "type": "text" },
+        { "name": "contact_number", "type": "number" }
+      ]
+    },
+    {
+      "name": "appointments",
+      "schema": [
+        { "name": "appointment_date", "type": "date", "required": true },
+        { "name": "status", "type": "select", "options": { "choices": ["scheduled", "completed", "cancelled"] }, "required": true },
+        { "name": "doctor_id", "type": "relation", "options": { "collection": "users" }, "required": true },
+        { "name": "patient_id", "type": "relation", "options": { "collection": "users" }, "required": true },
+        { "name": "notes", "type": "text" },
+        { "name": "consultation_type", "type": "select", "options": { "choices": ["video", "in-person"] }, "required": true }
+      ]
+    },
+    {
+      "name": "patient_records",
+      "schema": [
+        { "name": "patient_id", "type": "relation", "options": { "collection": "users" }, "required": true },
+        { "name": "record_date", "type": "date", "required": true },
+        { "name": "diagnosis", "type": "text", "required": true },
+        { "name": "prescription", "type": "text" },
+        { "name": "attachments", "type": "file" }
+      ]
+    },
+    {
+      "name": "payments",
+      "schema": [
+        { "name": "patient_id", "type": "relation", "options": { "collection": "users" }, "required": true },
+        { "name": "appointment_id", "type": "relation", "options": { "collection": "appointments" } },
+        { "name": "payment_date", "type": "date", "required": true },
+        { "name": "amount", "type": "number", "required": true },
+        { "name": "payment_status", "type": "select", "options": { "choices": ["pending", "completed", "failed"] }, "required": true },
+        { "name": "payment_method", "type": "select", "options": { "choices": ["M-Pesa", "card"] }, "required": true },
+        { "name": "transaction_reference", "type": "text", "required": true, "unique": true }
+      ]
+    },
+    {
+      "name": "video_sessions",
+      "schema": [
+        { "name": "appointment_id", "type": "relation", "options": { "collection": "appointments" }, "required": true },
+        { "name": "session_start", "type": "date", "required": true },
+        { "name": "session_end", "type": "date" },
+        { "name": "session_url", "type": "url", "required": true }
+      ]
+    },
+    {
+      "name": "chat_messages",
+      "schema": [
+        { "name": "sender_id", "type": "relation", "options": { "collection": "users" }, "required": true },
+        { "name": "receiver_id", "type": "relation", "options": { "collection": "users" }, "required": true },
+        { "name": "message", "type": "text", "required": true },
+        { "name": "sent_at", "type": "date", "required": true },
+        { "name": "read_status", "type": "bool", "default": false }
+      ]
+    }
+  ]
+}
