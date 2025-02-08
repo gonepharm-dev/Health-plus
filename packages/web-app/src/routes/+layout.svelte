@@ -4,9 +4,9 @@ import Navbar from '$lib/components/Navbar.svelte';
 import '../app.css';
 	let { children } = $props();
 </script>
-<Navbar />
+<!--<Navbar />-->
 <div class="flex min-h-screen flex-col">
 	{@render children()}
 
 </div>
-<Footer	/>
+<!--<Footer	/>-->
