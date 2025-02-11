@@ -95,3 +95,90 @@
  */
 
 export {};
+/**
+ * Appointment Subscription Controller
+ *
+ * 📖 Overview:
+ * This module manages real-time appointment updates using Server-Sent Events (SSE) in an Express.js application.
+ * It ensures that doctors and patients receive live updates about their appointments without refreshing the page.
+ *
+ * 🚀 Features:
+ * - Live appointment updates using Server-Sent Events (SSE)
+ * - Secure user authentication via JWT tokens
+ * - Automatic reconnection handling
+ * - Subscription to PocketBase for real-time data changes
+ *
+ * 📦 Installation:
+ * Ensure all dependencies are installed:
+ * ```sh
+ * npm install
+ * ```
+ *
+ * ▶️ How It Works:
+ * 1. **User Connection:**
+ *    - The user (doctor or patient) connects to the server via SSE.
+ *    - Their authentication token is verified to ensure secure access.
+ * 2. **Subscription to Appointment Updates:**
+ *    - The server listens for changes in the `Appointments` collection in PocketBase.
+ *    - Whenever an appointment is created, updated, or deleted, a real-time update is sent to connected users.
+ * 3. **Keeping the Connection Alive:**
+ *    - A heartbeat signal (`: heartbeat`) is sent every 5 seconds to maintain the SSE connection.
+ * 4. **User Disconnection:**
+ *    - When a user logs out or closes their browser, they are removed from the active subscribers list.
+ *
+ * 🛠 API Endpoints:
+ * - **Subscribe to Appointments:**
+ *   - `GET /api/realtime/appointments`
+ *   - **Headers:** `Authorization: Bearer <token>`
+ *   - **Response:** Streams live appointment updates
+ *
+ * 🔍 Code Breakdown:
+ * 1. **Importing Dependencies:**
+ *    ```ts
+ *    import SSE from "express-sse";
+ *    import AppError from "../utils/AppError";
+ *    import DatabaseInstance from "../middlewares/database";
+ *    import jwt, { type JwtPayload } from "jsonwebtoken";
+ *    ```
+ * 2. **Initializing SSE and Subscription:**
+ *    ```ts
+ *    const sse = new SSE();
+ *    const activeSubscriptions = new Set<string>();
+ *    ```
+ * 3. **Setting Up PocketBase Real-time Subscription:**
+ *    ```ts
+ *    await DatabaseInstance.collection("Appointments").subscribe("*", (event) => {
+ *      console.log(`📢 Event Type: ${event.action}`);
+ *      Object.keys(global.sseClients).forEach((userId) => {
+ *        global.sseClients[userId]?.({ action: event.action, record: event.record });
+ *      });
+ *    });
+ *    ```
+ * 4. **Handling Client Connection:**
+ *    ```ts
+ *    export const subscribeToAppointments = (req: Request, res: Response, next: NextFunction) => {
+ *      const token = req.headers.authorization?.split(" ")[1];
+ *      const { id: userId } = jwt.decode(token) as JwtPayload;
+ *      activeSubscriptions.add(userId);
+ *      res.write(`data: ${JSON.stringify({ type: "connection", message: "Connected" })}\n\n`);
+ *    };
+ *    ```
+ * 5. **Cleaning Up on Disconnection:**
+ *    ```ts
+ *    req.on("close", () => {
+ *      activeSubscriptions.delete(userId);
+ *      delete global.sseClients[userId];
+ *    });
+ *    ```
+ *
+ * ✨ Security Considerations:
+ * - Uses JWT for authentication.
+ * - Ensures only authenticated users can receive updates.
+ * - Prevents unauthorized access by validating tokens.
+ *
+ * 🔧 Possible Enhancements:
+ * - Implement role-based access control (RBAC) for different users.
+ * - Add logging for better debugging and monitoring.
+ * - Improve scalability with a more efficient SSE handling mechanism.
+ */
+
