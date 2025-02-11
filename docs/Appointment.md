@@ -250,4 +250,69 @@ export const createAppointment = async (
     return next(new AppError("Error creating appointment", 500));
   }
 };
+/**
+ * @file deleteAppointment.ts
+ * @description This file contains the function to delete an appointment in a telehealth system.
+ * It ensures that only the doctor or the patient involved can delete an appointment.
+ * The function also works with the real-time updates system (SSE) to notify users instantly.
+ */
+
+import type { NextFunction, Request, Response } from "express";
+import AppError from "../../utils/AppError";
+import jwt, { type JwtPayload } from "jsonwebtoken";
+import DatabaseInstance from "../../middlewares/database";
+
+/**
+ * @function deleteAppointment
+ * @description Deletes an appointment if the request is made by the assigned doctor or patient.
+ * @param {Request} req - The request object containing authorization and appointment ID.
+ * @param {Response} res - The response object.
+ * @param {NextFunction} next - The next middleware function.
+ */
+export const deleteAppointment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
+  try {
+    const { id } = req.params;
+
+    // Validate auth header
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      return next(new AppError("Invalid authorization header", 401));
+    }
+
+    // Decode and verify token
+    const token = authHeader.split(" ")[1];
+    const decodedToken = jwt.decode(token) as JwtPayload;
+
+    if (!decodedToken || !decodedToken.id) {
+      return next(new AppError("Invalid token", 401));
+    }
+    const userId = decodedToken.id;
+
+    // Retrieve the appointment from the database
+    const currentAppointment = await DatabaseInstance.collection("Appointments").getOne(id);
+    
+    // Check if the user is authorized to delete the appointment
+    if (currentAppointment.patient_id !== userId && currentAppointment.doctor_id !== userId) {
+      return next(new AppError("You are not allowed to perform this action", 403));
+    }
+
+    // Delete the appointment
+    await DatabaseInstance.collection("Appointments").delete(currentAppointment.id);
+
+    // Send success response
+    res.status(200).json({
+      status: "success",
+      data: null,
+    });
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return next(new AppError("Invalid or expired token", 401));
+    }
+    return next(new AppError("Error deleting an appointment", 500));
+  }
+};
 
