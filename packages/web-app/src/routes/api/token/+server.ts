@@ -1,4 +1,3 @@
-// src/routes/api/token/+server.ts
 import { json } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
 import type { SignOptions } from 'jsonwebtoken';
