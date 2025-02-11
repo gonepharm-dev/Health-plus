@@ -22,13 +22,13 @@ if (!(global as any).sseClients) {
 // Initialize PocketBase subscription for appointments
 const initializeAppointmentSubscription = async () => {
   try {
-    console.log("🔄 Initializing PocketBase subscription for appointments");
+    //console.log("🔄 Initializing PocketBase subscription for appointments");
 
     await DatabaseInstance.collection("Appointments").subscribe(
       "*",
       function (event) {
-        console.log(`📢 Event Type: ${event.action}`);
-        console.log("Updated Record:", event.record);
+        // console.log(`📢 Event Type: ${event.action}`);
+        // console.log("Updated Record:", event.record);
 
         // Send update to connected clients
         Object.keys((global as any).sseClients).forEach((userId) => {
@@ -43,7 +43,7 @@ const initializeAppointmentSubscription = async () => {
       }
     );
 
-    console.log("✅ Successfully subscribed to PocketBase appointments");
+    //console.log("✅ Successfully subscribed to PocketBase appointments");
   } catch (error) {
     console.error("❌ Error initializing PocketBase subscription:", error);
   }
@@ -105,7 +105,7 @@ export const subscribeToAppointments = (
     req.on("close", () => {
       activeSubscriptions.delete(userId);
       delete (global as any).sseClients[userId];
-      console.log(`❌ Client ${userId} disconnected from SSE`);
+      // console.log(`❌ Client ${userId} disconnected from SSE`);
     });
 
     // Send heartbeat every 5 seconds

@@ -1,9 +1,21 @@
 import express from "express";
 import multer from "multer";
 
-import { ConfirmEmailVerification, ConfirmPasswordReset, CreateUser, EmailVerification, LoginUser, OAuth2, PasswordReset, protect, RestrictTo } from "../controllers/AuthController";
-import { ActivateAccount, DeactivateAccount, DeleteUser, getAllUsers, ProfilePicture } from "../controllers/userController";
 import AppError from "../utils/AppError";
+import { CreateUser } from "../controllers/Auth/createUser";
+import { EmailVerification } from "../controllers/Auth/emailVerification";
+import { ConfirmEmailVerification } from "../controllers/Auth/emailConfirm";
+import { LoginUser } from "../controllers/Auth/loginUser";
+import { protect } from "../controllers/Auth/protect";
+import { RestrictTo } from "../controllers/Auth/restrictTo";
+import { PasswordReset } from "../controllers/Auth/updateUser";
+import { ConfirmPasswordReset } from "../controllers/Auth/confirmPassword";
+import { OAuth2 } from "../controllers/Auth/oath";
+import { getAllUsers } from "../controllers/Auth/getAllUsers";
+import { DeleteUser } from "../controllers/Auth/deleteUser";
+import { DeactivateAccount } from "../controllers/Auth/deactivateAccount";
+import { ActivateAccount } from "../controllers/Auth/activateAccount";
+import { ProfilePicture } from "../controllers/Auth/profilePicture";
 
 const router = express.Router();
 

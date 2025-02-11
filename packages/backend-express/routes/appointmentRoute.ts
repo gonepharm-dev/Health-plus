@@ -3,10 +3,11 @@ import express from "express";
 import { subscribeToAppointments } from "../controllers/Appointment";
 import { createAppointment } from "../controllers/Appointment/createAppointment";
 import { getSingleDoctorAppointments, getSinglePatientAppointments } from "../controllers/Appointment/singleAppointment";
-import { protect, RestrictTo } from "../controllers/AuthController";
 import { updateAppointment } from "../controllers/Appointment/updateAppointment";
 import { deleteAppointment } from "../controllers/Appointment/deleteAppointment";
 import { getAllAppointments } from "../controllers/Appointment/getAllAppointments";
+import { protect } from "../controllers/Auth/protect";
+import { RestrictTo } from "../controllers/Auth/restrictTo";
 
 const router = express.Router();
 
