@@ -41,7 +41,6 @@ export const createAppointment = async ( req: Request, res: Response, next: Next
       if (error instanceof jwt.JsonWebTokenError) {
         return next(new AppError("Invalid or expired token", 401));
       }
-      console.error("Appointment creation error:", error);
       return next(new AppError("Error creating appointment", 500));
     }
   };
