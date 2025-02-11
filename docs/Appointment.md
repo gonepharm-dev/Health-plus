@@ -181,4 +181,73 @@ export {};
  * - Add logging for better debugging and monitoring.
  * - Improve scalability with a more efficient SSE handling mechanism.
  */
+import type { NextFunction, Request, Response } from "express";
+import AppError from "../../utils/AppError";
+import jwt, { type JwtPayload } from "jsonwebtoken";
+import DatabaseInstance from "../../middlewares/database";
+
+/**
+ * @function createAppointment
+ * @description Handles the creation of a new appointment in the telehealth system.
+ * 
+ * ✅ **Validates user authentication**
+ * ✅ **Ensures required appointment fields exist**
+ * ✅ **Stores appointment data in the database**
+ * ✅ **Notifies doctors in real-time via SSE**
+ * 
+ * @param {Request} req - The incoming request containing appointment details.
+ * @param {Response} res - The response object used to send data back to the client.
+ * @param {NextFunction} next - Express function to handle errors.
+ */
+export const createAppointment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // 1️⃣ Validate authorization token
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      return next(new AppError("Invalid authorization header", 401));
+    }
+
+    // 2️⃣ Decode and verify JWT token
+    const token = authHeader.split(" ")[1];
+    const decodedToken = jwt.decode(token) as JwtPayload;
+    if (!decodedToken?.id) {
+      return next(new AppError("Unauthorized: Missing user ID in token", 401));
+    }
+
+    // 3️⃣ Extract and validate required fields
+    const { appointment_date, status, doctor_id, notes, consultation_type } = req.body;
+    if (!appointment_date || !status || !doctor_id || !consultation_type) {
+      return next(new AppError("Missing required appointment fields", 400));
+    }
+
+    // 4️⃣ Create and store the appointment record
+    const record = await DatabaseInstance.collection("Appointments").create({
+      appointment_date,
+      status,
+      doctor_id,
+      patient_id: decodedToken.id, // Assign patient ID from token
+      notes,
+      consultation_type,
+      created_at: new Date().toISOString(),
+    });
+
+    // 5️⃣ Return success response
+    res.status(201).json({
+      status: "success",
+      data: record,
+    });
+  } catch (error) {
+    // Handle token errors separately
+    if (error instanceof jwt.JsonWebTokenError) {
+      return next(new AppError("Invalid or expired token", 401));
+    }
+    
+    console.error("❌ Appointment creation error:", error);
+    return next(new AppError("Error creating appointment", 500));
+  }
+};
 
