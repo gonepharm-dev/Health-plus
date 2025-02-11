@@ -40,7 +40,9 @@
  * 🔍 How the Code Works:
  * 1. Importing Required Modules:
  *    ```ts
+ *    import express, { Request, Response } from 'express';
  *    import morgan from 'morgan';
+ *    import cors from 'cors';
  *    import AppError from './utils/AppError';
  *    import userRoute from './routes/userRoute';
  *    import appointRoute from './routes/appointmentRoute';
@@ -53,6 +55,8 @@
  * 3. Middleware Configuration:
  *    ```ts
  *    app.use(cors());
+ *    app.use(express.json());
+ *    app.use(morgan('dev'));
  *    ```
  * 4. Setting Up API Routes:
  *    ```ts
@@ -79,4 +83,3 @@
  */
 
 export {};
-
