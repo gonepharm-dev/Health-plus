@@ -10,6 +10,29 @@
   let errorMessage = '';
   let isLoading = false;
 
+  // Add email and password validation regex
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/; // At least 8 characters, one uppercase letter, one number
+
+  // Function to validate the form
+  const validateForm = () => {
+    errorMessage = ''; // Reset error message
+
+    // Validate email
+    if (!emailRegex.test(formData.email)) {
+      errorMessage = 'Please enter a valid email address';
+      return false;
+    }
+
+    // Validate password
+    if (!passwordRegex.test(formData.password)) {
+      errorMessage = 'Password must be at least 8 characters long and contain at least one uppercase letter and one number';
+      return false;
+    }
+
+    return true;
+  };
+
   // Function to handle form submission
   const handleSubmit = async (e: SubmitEvent) => {
     // Prevent the default form submission behavior
@@ -17,6 +40,12 @@
     // Clear any existing error message and set loading state to true
     errorMessage = '';
     isLoading = true;
+
+    // Validate form before submission
+    if (!validateForm()) {
+      isLoading = false;
+      return;
+    }
 
     try {
       // Send a POST request to the login API with the form data
@@ -125,6 +154,7 @@
                 type="email"
                 id="email"
                 bind:value={formData.email}
+                placeholder="example@example.com"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 required
               />
@@ -137,6 +167,7 @@
                 type="password"
                 id="password"
                 bind:value={formData.password}
+                placeholder="••••••••"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 required
               />

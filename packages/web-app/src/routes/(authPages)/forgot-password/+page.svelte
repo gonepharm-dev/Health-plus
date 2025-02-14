@@ -2,7 +2,7 @@
     // Importing enhance function from $app/forms for form enhancements
     import { enhance } from '$app/forms';
     // Importing ActionData type from './$types' for action data typing
-    import type { ActionData } from './$types';
+    import type { ActionData } from '../../forgot-password/$types';
     
     // Exporting form state as ActionData type
     export let form: ActionData;

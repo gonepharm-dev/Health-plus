@@ -20,6 +20,15 @@
   let errorMessage = '';
   let successMessage = '';
 
+  // Add password validation regex and error states
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phoneRegex = /^\d{10}$/;  // Assumes 10-digit phone number
+
+  let passwordError = '';
+  let emailError = '';
+  let phoneError = '';
+
   // Reactively update the visibility of the specialization field based on the role selection
   $: {
     showSpecialization = formData.role === 'doctor';
@@ -29,39 +38,58 @@
     }
   }
 
+  // Function to validate the form
+  const validateForm = () => {
+    // Reset all error messages
+    errorMessage = '';
+    passwordError = '';
+    emailError = '';
+    phoneError = '';
+
+    // Validate email
+    if (!emailRegex.test(formData.email)) {
+      emailError = 'Please enter a valid email address';
+      return false;
+    }
+
+    // Validate phone number
+    if (!phoneRegex.test(formData.contact_number)) {
+      phoneError = 'Please enter a valid 10-digit phone number';
+      return false;
+    }
+
+    // Validate password
+    if (!passwordRegex.test(formData.password)) {
+      passwordError = 'Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character';
+      return false;
+    }
+
+    // Validate password match
+    if (formData.password !== formData.confirmPassword) {
+      passwordError = 'Passwords do not match';
+      return false;
+    }
+
+    return true;
+  };
+
   // Function to handle form submission
   const handleSubmit = async (e: SubmitEvent) => {
-    // Prevent the default form submission behavior
     e.preventDefault();
-    // Set the loading state to true
     isLoading = true;
-    // Reset error and success messages
     errorMessage = '';
     successMessage = '';
 
-    // Validate if the passwords match
-    if (formData.password !== formData.confirmPassword) {
-      // If passwords do not match, set the error message and exit
-      errorMessage = 'Passwords do not match';
-      isLoading = false;
-      return;
-    }
-
-    // Validate the password length
-    if (formData.password.length < 8) {
-      // If password length is less than 8 characters, set the error message and exit
-      errorMessage = 'Password must be at least 8 characters long';
+    // Validate form before submission
+    if (!validateForm()) {
       isLoading = false;
       return;
     }
 
     try {
-      // Create a copy of formData without confirmPassword
       const submitData = { ...formData };
-      // Remove confirmPassword from the submitData object
       delete submitData.confirmPassword;
 
-      // Send a POST request to the signup API endpoint
       const response = await fetch('https://gonep-app.pockethost.io/api/auth/signup', {
         method: 'POST',
         headers: {
@@ -70,24 +98,18 @@
         body: JSON.stringify(submitData)
       });
 
-      // Parse the response data
       const data = await response.json();
 
-      // If the response is not OK, throw an error
       if (!response.ok) {
         throw new Error(data.message || 'Signup failed');
       }
 
-      // If the response is OK, set the success message and navigate to the login page after a delay
-      successMessage = 'Account created successfully! Please check your email for verification.';
-      setTimeout(() => {
-        goto('/login');
-      }, 2000);
+      successMessage = 'Account created successfully! Redirecting to login...';
+      // Redirect to login page immediately
+      goto('/login');
     } catch (error: any) {
-      // If an error occurs during the signup process, set the error message
       errorMessage = error.message || 'Failed to create account';
     } finally {
-      // Set the loading state to false after the operation is complete
       isLoading = false;
     }
   };
@@ -169,21 +191,26 @@
                   type="text"
                   id="full_name"
                   bind:value={formData.full_name}
+                  placeholder="John Doe"
                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
               </div>
 
-              <!-- Email -->
+              <!-- Email with validation message -->
               <div>
                 <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
                 <input
                   type="email"
                   id="email"
                   bind:value={formData.email}
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="example@example.com"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 {emailError ? 'border-red-500' : ''}"
                   required
                 />
+                {#if emailError}
+                  <p class="mt-1 text-sm text-red-600">{emailError}</p>
+                {/if}
               </div>
 
               <!-- Username -->
@@ -193,6 +220,7 @@
                   type="text"
                   id="username"
                   bind:value={formData.username}
+                  placeholder="johndoe123"
                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
@@ -213,16 +241,22 @@
                 </select>
               </div>
 
-              <!-- Contact -->
+              <!-- Contact with validation message -->
               <div>
                 <label for="contact" class="block text-sm font-medium text-gray-700">Contact Number</label>
                 <input
                   type="tel"
                   id="contact"
                   bind:value={formData.contact_number}
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  maxlength="13"
+                  pattern="^\+\d{12}$"
+                  placeholder="+254717053207"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 {phoneError ? 'border-red-500' : ''}"
                   required
                 />
+                {#if phoneError}
+                  <p class="mt-1 text-sm text-red-600">{phoneError}</p>
+                {/if}
               </div>
 
               <!-- Specialization (only shown for doctors) -->
@@ -233,22 +267,27 @@
                     type="text"
                     id="specialization"
                     bind:value={formData.specialization}
+                    placeholder="Cardiology"
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
                   />
                 </div>
               {/if}
 
-              <!-- Password -->
+              <!-- Password with validation message -->
               <div>
                 <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
                 <input
                   type="password"
                   id="password"
                   bind:value={formData.password}
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="••••••••"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 {passwordError ? 'border-red-500' : ''}"
                   required
                 />
+                {#if passwordError}
+                  <p class="mt-1 text-sm text-red-600">{passwordError}</p>
+                {/if}
               </div>
 
               <!-- Confirm Password -->
@@ -258,6 +297,7 @@
                   type="password"
                   id="confirmPassword"
                   bind:value={formData.confirmPassword}
+                  placeholder="••••••••"
                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
