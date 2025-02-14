@@ -1,18 +1,64 @@
 <script lang="ts">
+  // Initialize form data with default values
   let formData = {
     email: '',
     password: '',
     rememberMe: false
   };
 
+  // Initialize error message and loading state
+  let errorMessage = '';
+  let isLoading = false;
+
+  // Function to handle form submission
   const handleSubmit = async (e: SubmitEvent) => {
+    // Prevent the default form submission behavior
     e.preventDefault();
-    // Add your form submission logic here
-    console.log(formData);
+    // Clear any existing error message and set loading state to true
+    errorMessage = '';
+    isLoading = true;
+
+    try {
+      // Send a POST request to the login API with the form data
+      const response = await fetch('https://gonep-app.pockethost.io/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      // Parse the response data
+      const data = await response.json();
+
+      // If the response is not OK, throw an error
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // If the response is OK, store the token and user data in local storage
+      localStorage.setItem('token', data.token);
+      if (formData.rememberMe) {
+        localStorage.setItem('userData', JSON.stringify(data.record));
+      }
+
+      // Redirect the user to the dashboard
+      window.location.href = '/dashboard';
+    } catch (error) {
+      // If an error occurs, set the error message
+      errorMessage = error instanceof Error ? error.message : 'Login failed';
+    } finally {
+      // Set loading state to false after the operation is complete
+      isLoading = false;
+    }
   };
 
+  // Function to handle Google sign-in
   const handleGoogleSignIn = async () => {
-    // Implement Google sign-in logic here
+    // Placeholder for Google sign-in logic
     console.log('Google sign-in clicked');
   };
 </script>
@@ -66,6 +112,12 @@
           </div>
 
           <form on:submit|preventDefault={handleSubmit} class="space-y-6">
+            {#if errorMessage}
+              <div class="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <span class="block sm:inline">{errorMessage}</span>
+              </div>
+            {/if}
+
             <!-- Email -->
             <div>
               <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
@@ -107,9 +159,16 @@
             <div>
               <button
                 type="submit"
-                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                disabled={isLoading}
+                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign In
+                {#if isLoading}
+                  <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                {/if}
+                {isLoading ? 'Signing in...' : 'Sign In'}
               </button>
             </div>
 

@@ -221,69 +221,118 @@ export const RestrictTo = function(...role:string[]){
   }
 }
 
-// Password reset
+/**
+ * Handles password reset request initiation
+ * Generates a reset token and sends it to user's email
+ * 
+ * @param {Request} req - Express request object containing email in body
+ * @param {Response} res - Express response object
+ * @param {NextFunction} next - Express next middleware function
+ */
 export const PasswordReset = async function (req: Request, res: Response, next: NextFunction) {
   try {
+    // Extract email from request body
     const { email } = req.body;
 
+    // Validate email presence
     if (!email) {
       return next(new AppError("Email is required", 400));
     }
 
-    // Request password reset
+    // Request password reset from PocketBase
+    // This will:
+    // 1. Verify if the email exists in the database
+    // 2. Generate a unique reset token
+    // 3. Send an email with reset instructions
     const sendToken = await DatabaseInstance.collection("users").requestPasswordReset(email);
 
-    // Ensure the token was generated successfully
+    // Verify if token generation was successful
     if (!sendToken) {
       return next(new AppError("Failed to send password reset email", 500));
     }
 
+    // Send success response
     res.status(200).json({
       status: "success",
       message: "Password reset email sent successfully",
       data: sendToken
     });
   } catch (error: any) {
+    // Handle any unexpected errors
     return next(new AppError("Something went wrong, please try again", 500));
   }
 };
 
-// confirm password reset
+/**
+ * Handles password reset confirmation
+ * Validates the reset token and updates the password
+ * 
+ * @param {Request} req - Express request object containing token and passwords
+ * @param {Response} res - Express response object
+ * @param {NextFunction} next - Express next middleware function
+ */
 export const ConfirmPasswordReset = async function (req: Request, res: Response, next: NextFunction) {
   try {
+    // Extract required data from request body
     const { token, password, newPassword } = req.body;
 
+    // Validate presence of reset token
     if (!token) {
       return next(new AppError("Reset token is required", 400));
     }
 
+    // Validate presence of both passwords
     if (!password || !newPassword) {
       return next(new AppError("Both current and new passwords are required", 400));
     }
 
-    // Ensure new password meets security requirements
-    if (!validator.isStrongPassword(newPassword, { minLength: 8, minNumbers: 1, minUppercase: 1, minSymbols: 1 })) {
-      return next(new AppError("New password must be at least 8 characters long and include a number, an uppercase letter, and a special character", 400));
+    // Validate new password strength using validator
+    // Requirements:
+    // - Minimum length: 8 characters
+    // - At least 1 number
+    // - At least 1 uppercase letter
+    // - At least 1 special character
+    if (!validator.isStrongPassword(newPassword, { 
+      minLength: 8, 
+      minNumbers: 1, 
+      minUppercase: 1, 
+      minSymbols: 1 
+    })) {
+      return next(new AppError(
+        "New password must be at least 8 characters long and include a number, an uppercase letter, and a special character",
+        400
+      ));
     }
 
-    // Ensure the new password is different from the old one
+    // Ensure new password is different from current password
     if (password === newPassword) {
       return next(new AppError("New password must be different from the old password", 400));
     }
 
-    const resetConfirmation = await DatabaseInstance.collection("users").confirmPasswordReset(token, password, newPassword);
+    // Attempt to confirm password reset with PocketBase
+    // This will:
+    // 1. Validate the reset token
+    // 2. Check token expiration
+    // 3. Update the password if valid
+    const resetConfirmation = await DatabaseInstance.collection("users").confirmPasswordReset(
+      token,
+      password,
+      newPassword
+    );
 
-    // Ensure the reset was successful
+    // Check if reset was successful
     if (!resetConfirmation) {
       return next(new AppError("Invalid or expired token", 400));
     }
 
+    // Send success response
     res.status(200).json({
       status: "success",
       message: "Password has been reset successfully",
       data: null
     });
   } catch (error: any) {
+    // Handle any unexpected errors
     return next(new AppError("Something went wrong, please try again", 500));
   }
 };

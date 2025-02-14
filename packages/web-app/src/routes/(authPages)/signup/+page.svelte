@@ -1,26 +1,117 @@
 <script lang="ts">
+  // Import the goto function from $app/navigation to handle navigation
+  import { goto } from '$app/navigation';
+
+  // Initialize the form data object with default values
   let formData = {
-    fullName: '',
+    full_name: '',
     email: '',
     username: '',
     role: '',
-    contact: '',
+    contact_number: '',
     specialization: '',
     password: '',
     confirmPassword: ''
   };
 
+  // Initialize flags to track the loading state and visibility of the specialization field
+  let isLoading = false;
+  let showSpecialization = false;
+  let errorMessage = '';
+  let successMessage = '';
+
+  // Reactively update the visibility of the specialization field based on the role selection
+  $: {
+    showSpecialization = formData.role === 'doctor';
+    // If the role is not 'doctor', reset the specialization field
+    if (!showSpecialization) {
+      formData.specialization = '';
+    }
+  }
+
+  // Function to handle form submission
   const handleSubmit = async (e: SubmitEvent) => {
+    // Prevent the default form submission behavior
     e.preventDefault();
-    // Add your form submission logic here
-    console.log(formData);
+    // Set the loading state to true
+    isLoading = true;
+    // Reset error and success messages
+    errorMessage = '';
+    successMessage = '';
+
+    // Validate if the passwords match
+    if (formData.password !== formData.confirmPassword) {
+      // If passwords do not match, set the error message and exit
+      errorMessage = 'Passwords do not match';
+      isLoading = false;
+      return;
+    }
+
+    // Validate the password length
+    if (formData.password.length < 8) {
+      // If password length is less than 8 characters, set the error message and exit
+      errorMessage = 'Password must be at least 8 characters long';
+      isLoading = false;
+      return;
+    }
+
+    try {
+      // Create a copy of formData without confirmPassword
+      const submitData = { ...formData };
+      // Remove confirmPassword from the submitData object
+      delete submitData.confirmPassword;
+
+      // Send a POST request to the signup API endpoint
+      const response = await fetch('https://gonep-app.pockethost.io/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submitData)
+      });
+
+      // Parse the response data
+      const data = await response.json();
+
+      // If the response is not OK, throw an error
+      if (!response.ok) {
+        throw new Error(data.message || 'Signup failed');
+      }
+
+      // If the response is OK, set the success message and navigate to the login page after a delay
+      successMessage = 'Account created successfully! Please check your email for verification.';
+      setTimeout(() => {
+        goto('/login');
+      }, 2000);
+    } catch (error: any) {
+      // If an error occurs during the signup process, set the error message
+      errorMessage = error.message || 'Failed to create account';
+    } finally {
+      // Set the loading state to false after the operation is complete
+      isLoading = false;
+    }
   };
 
+  // Function to handle Google sign-up
   const handleGoogleSignUp = async () => {
-    // Implement Google sign-up logic here
+    // Placeholder for Google sign-up logic
     console.log('Google sign-up clicked');
   };
 </script>
+
+<!-- Display error message if there is one -->
+{#if errorMessage}
+  <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+    {errorMessage}
+  </div>
+{/if}
+
+<!-- Display success message if there is one -->
+{#if successMessage}
+  <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+    {successMessage}
+  </div>
+{/if}
 
 <div class="min-h-screen bg-blue-50 py-12 px-4 sm:px-6 lg:px-8">
   <div class="max-w-6xl mx-auto">
@@ -73,11 +164,11 @@
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
               <!-- Full Name -->
               <div>
-                <label for="fullName" class="block text-sm font-medium text-gray-700">Full name</label>
+                <label for="full_name" class="block text-sm font-medium text-gray-700">Full name</label>
                 <input
                   type="text"
-                  id="fullName"
-                  bind:value={formData.fullName}
+                  id="full_name"
+                  bind:value={formData.full_name}
                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
@@ -118,34 +209,35 @@
                 >
                   <option value="">Select role</option>
                   <option value="doctor">Doctor</option>
-                  <option value="nurse">Nurse</option>
                   <option value="patient">Patient</option>
                 </select>
               </div>
 
               <!-- Contact -->
               <div>
-                <label for="contact" class="block text-sm font-medium text-gray-700">Contact</label>
+                <label for="contact" class="block text-sm font-medium text-gray-700">Contact Number</label>
                 <input
                   type="tel"
                   id="contact"
-                  bind:value={formData.contact}
+                  bind:value={formData.contact_number}
                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
               </div>
 
-              <!-- Specialization -->
-              <div>
-                <label for="specialization" class="block text-sm font-medium text-gray-700">Specialization</label>
-                <input
-                  type="text"
-                  id="specialization"
-                  bind:value={formData.specialization}
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  required
-                />
-              </div>
+              <!-- Specialization (only shown for doctors) -->
+              {#if showSpecialization}
+                <div>
+                  <label for="specialization" class="block text-sm font-medium text-gray-700">Specialization</label>
+                  <input
+                    type="text"
+                    id="specialization"
+                    bind:value={formData.specialization}
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              {/if}
 
               <!-- Password -->
               <div>
@@ -176,9 +268,20 @@
             <div>
               <button
                 type="submit"
-                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                disabled={isLoading}
+                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign Up
+                {#if isLoading}
+                  <span class="inline-flex items-center">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Creating account...
+                  </span>
+                {:else}
+                  Sign Up
+                {/if}
               </button>
             </div>
 

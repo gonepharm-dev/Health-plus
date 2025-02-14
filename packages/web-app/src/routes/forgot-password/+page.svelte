@@ -1,8 +1,57 @@
 <script lang="ts">
+    // Importing enhance function from $app/forms for form enhancements
     import { enhance } from '$app/forms';
+    // Importing ActionData type from './$types' for action data typing
     import type { ActionData } from './$types';
     
+    // Exporting form state as ActionData type
     export let form: ActionData;
+
+    // Initializing loading and successMessage state
+    let loading = false;
+    let successMessage = '';
+
+    // Function to handle form submission
+    async function handleSubmit(event: SubmitEvent) {
+        // Setting loading state to true and resetting successMessage
+        loading = true;
+        successMessage = '';
+        
+        try {
+            // Creating a new FormData object from the event target
+            const formData = new FormData(event.target as HTMLFormElement);
+            // Extracting email from the formData
+            const email = formData.get('email');
+
+            // Sending a POST request to the forgot-password API endpoint
+            const response = await fetch('https://gonep-app.pockethost.io/api/auth/forgot-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+            });
+
+            // Parsing the response data
+            const data = await response.json();
+
+            // If the response is not OK, throwing an error
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to send reset email');
+            }
+
+            // Setting success message if the response is OK
+            successMessage = 'Reset instructions have been sent to your email';
+            // Resetting the form
+            (event.target as HTMLFormElement).reset();
+        } catch (error: any) {
+            // Setting form error if an error occurs
+            form = { error: error.message };
+        } finally {
+            // Setting loading state to false after the operation is complete
+            loading = false;
+        }
+    }
 </script>
 
 <div class="min-h-screen flex flex-col items-center justify-center bg-blue-50">
@@ -15,8 +64,7 @@
         </div>
 
         <form 
-            method="POST" 
-            use:enhance 
+            on:submit|preventDefault={handleSubmit}
             class="mt-8 space-y-6"
         >
             <div>
@@ -42,11 +90,18 @@
                 </div>
             {/if}
 
+            {#if successMessage}
+                <div class="text-green-600 text-sm">
+                    {successMessage}
+                </div>
+            {/if}
+
             <button
                 type="submit"
-                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-blue-900 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                disabled={loading}
+                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-blue-900 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-                Reset Password
+                {loading ? 'Sending...' : 'Reset Password'}
             </button>
 
             <div class="text-center">
