@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { sessionStore } from '$lib/stores/session'; // Import the session store
+
   // Initialize form data with default values
   let formData = {
     email: '',
@@ -68,11 +70,8 @@
         throw new Error(data.message || 'Login failed');
       }
 
-      // If the response is OK, store the token and user data in local storage
-      localStorage.setItem('token', data.token);
-      if (formData.rememberMe) {
-        localStorage.setItem('userData', JSON.stringify(data.record));
-      }
+      // Store the token and user data in session store
+      sessionStore.login(data.record); // Use session store for login
 
       // Redirect the user to the dashboard
       window.location.href = '/dashboard';
