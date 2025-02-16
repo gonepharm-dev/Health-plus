@@ -315,4 +315,51 @@ export const deleteAppointment = async (
     return next(new AppError("Error deleting an appointment", 500));
   }
 };
+import type { NextFunction, Request, Response } from "express";
+import AppError from "../../utils/AppError";
+import jwt, { type JwtPayload } from "jsonwebtoken";
+import DatabaseInstance from "../../middlewares/database";
+
+/**
+ * Retrieves all appointments from the database.
+ * 
+ * @route GET /appointments
+ * @param {Request} req - The request object.
+ * @param {Response} res - The response object.
+ * @param {NextFunction} next - The next middleware function to call in case of error.
+ * @returns {Promise<void>} - Returns a promise that resolves with the list of appointments.
+ * @throws {AppError} - Throws an error if no appointments are found or if there's an error in fetching appointments.
+ */
+export const getAllAppointments = async function(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+        // Optional: token validation before database query
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return next(new AppError("Authorization token missing", 401));
+        }
+        
+        const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload; // Assuming JWT_SECRET is set in env variables
+
+        // Fetching appointments from the database
+        const resultList = await DatabaseInstance.collection('Appointments').getFullList({
+            sort: '-created',  // Sorting appointments by creation date (descending)
+        });
+
+        if (!resultList || resultList.length === 0) {
+            return next(new AppError("No appointments found", 404)); // Handling case with no appointments
+        }
+
+        // Sending the response with the list of appointments
+        res.status(200).json({
+            status: "success",
+            data: resultList
+        });
+    } catch (error) {
+        console.error(error);  // Log the error for debugging
+        if (error instanceof jwt.JsonWebTokenError) {
+            return next(new AppError("Invalid or expired token", 401)); // Handling JWT errors
+        }
+        return next(new AppError("Error getting appointments", 500)); // Generic error handler
+    }
+};
 
