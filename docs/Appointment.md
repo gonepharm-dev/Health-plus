@@ -1,3 +1,59 @@
+import express from "express";
+import { subscribeToAppointments } from "../controllers/Appointment";
+import { createAppointment } from "../controllers/Appointment/createAppointment";
+import { getSingleDoctorAppointments, getSinglePatientAppointments } from "../controllers/Appointment/singleAppointment";
+import { protect, RestrictTo } from "../controllers/AuthController";
+import { updateAppointment } from "../controllers/Appointment/updateAppointment";
+import { deleteAppointment } from "../controllers/Appointment/deleteAppointment";
+import { getAllAppointments } from "../controllers/Appointment/getAllAppointments";
+
+const router = express.Router();
+
+/**
+ * Routes related to appointments.
+ * 
+ * This router handles CRUD operations for appointments, real-time updates via SSE, 
+ * and manages access control for different user roles (doctor, patient).
+ * 
+ * @module AppointmentRoutes
+ */
+
+/**
+ * @route POST /appointments
+ * @access Private (protected route)
+ * @description Creates a new appointment.
+ * @param {Request} req - The request object containing appointment data.
+ * @param {Response} res - The response object to send back the created appointment.
+ */
+router
+    .route('/')
+        .post(protect, createAppointment)  // Protected route for creating an appointment
+        .get(protect, getAllAppointments); // Protected route for getting all appointments
+
+/**
+ * @route GET /appointments
+ * @access Public
+ * @description Subscribes to real-time updates of appointments using Server-Sent Events (SSE).
+ * @param {Request} req - The request object for subscribing.
+ * @param {Response} res - The response object to send back updates.
+ */
+router.route("/appointments").get(subscribeToAppointments); // Subscribe to real-time updates
+
+/**
+ * @route GET /appointments/:id
+ * @access Private (protected route)
+ * @description Fetches a single appointment either for a patient or a doctor.
+ * @param {Request} req - The request object containing the appointment ID in URL parameters.
+ * @param {Response} res - The response object to return the requested appointment data.
+ */
+router
+    .route('/:id')
+        .get(protect, getSinglePatientAppointments) // Fetch single appointment for patient
+        .get(protect, getSingleDoctorAppointments)  // Fetch single appointment for doctor
+        .patch(protect, RestrictTo('doctor', 'patient'), updateAppointment)  // Update the appointment
+        .delete(protect, RestrictTo('doctor', 'patient'), deleteAppointment); // Delete an appointment
+
+export default router;
 /**
  * @file Express.js API Documentation
  * @description This API handles user management and real-time appointments.
