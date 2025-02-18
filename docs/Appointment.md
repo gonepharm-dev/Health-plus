@@ -1,3 +1,59 @@
+import express from "express";
+import { subscribeToAppointments } from "../controllers/Appointment";
+import { createAppointment } from "../controllers/Appointment/createAppointment";
+import { getSingleDoctorAppointments, getSinglePatientAppointments } from "../controllers/Appointment/singleAppointment";
+import { protect, RestrictTo } from "../controllers/AuthController";
+import { updateAppointment } from "../controllers/Appointment/updateAppointment";
+import { deleteAppointment } from "../controllers/Appointment/deleteAppointment";
+import { getAllAppointments } from "../controllers/Appointment/getAllAppointments";
+
+const router = express.Router();
+
+/**
+ * Routes related to appointments.
+ * 
+ * This router handles CRUD operations for appointments, real-time updates via SSE, 
+ * and manages access control for different user roles (doctor, patient).
+ * 
+ * @module AppointmentRoutes
+ */
+
+/**
+ * @route POST /appointments
+ * @access Private (protected route)
+ * @description Creates a new appointment.
+ * @param {Request} req - The request object containing appointment data.
+ * @param {Response} res - The response object to send back the created appointment.
+ */
+router
+    .route('/')
+        .post(protect, createAppointment)  // Protected route for creating an appointment
+        .get(protect, getAllAppointments); // Protected route for getting all appointments
+
+/**
+ * @route GET /appointments
+ * @access Public
+ * @description Subscribes to real-time updates of appointments using Server-Sent Events (SSE).
+ * @param {Request} req - The request object for subscribing.
+ * @param {Response} res - The response object to send back updates.
+ */
+router.route("/appointments").get(subscribeToAppointments); // Subscribe to real-time updates
+
+/**
+ * @route GET /appointments/:id
+ * @access Private (protected route)
+ * @description Fetches a single appointment either for a patient or a doctor.
+ * @param {Request} req - The request object containing the appointment ID in URL parameters.
+ * @param {Response} res - The response object to return the requested appointment data.
+ */
+router
+    .route('/:id')
+        .get(protect, getSinglePatientAppointments) // Fetch single appointment for patient
+        .get(protect, getSingleDoctorAppointments)  // Fetch single appointment for doctor
+        .patch(protect, RestrictTo('doctor', 'patient'), updateAppointment)  // Update the appointment
+        .delete(protect, RestrictTo('doctor', 'patient'), deleteAppointment); // Delete an appointment
+
+export default router;
 /**
  * @file Express.js API Documentation
  * @description This API handles user management and real-time appointments.
@@ -314,5 +370,233 @@ export const deleteAppointment = async (
     }
     return next(new AppError("Error deleting an appointment", 500));
   }
+};
+import type { NextFunction, Request, Response } from "express";
+import AppError from "../../utils/AppError";
+import jwt, { type JwtPayload } from "jsonwebtoken";
+import DatabaseInstance from "../../middlewares/database";
+
+/**
+ * Retrieves all appointments from the database.
+ * 
+ * @route GET /appointments
+ * @param {Request} req - The request object.
+ * @param {Response} res - The response object.
+ * @param {NextFunction} next - The next middleware function to call in case of error.
+ * @returns {Promise<void>} - Returns a promise that resolves with the list of appointments.
+ * @throws {AppError} - Throws an error if no appointments are found or if there's an error in fetching appointments.
+ */
+export const getAllAppointments = async function(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+        // Optional: token validation before database query
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return next(new AppError("Authorization token missing", 401));
+        }
+        
+        const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload; // Assuming JWT_SECRET is set in env variables
+
+        // Fetching appointments from the database
+        const resultList = await DatabaseInstance.collection('Appointments').getFullList({
+            sort: '-created',  // Sorting appointments by creation date (descending)
+        });
+
+        if (!resultList || resultList.length === 0) {
+            return next(new AppError("No appointments found", 404)); // Handling case with no appointments
+        }
+
+        // Sending the response with the list of appointments
+        res.status(200).json({
+            status: "success",
+            data: resultList
+        });
+    } catch (error) {
+        console.error(error);  // Log the error for debugging
+        if (error instanceof jwt.JsonWebTokenError) {
+            return next(new AppError("Invalid or expired token", 401)); // Handling JWT errors
+        }
+        return next(new AppError("Error getting appointments", 500)); // Generic error handler
+    }
+};
+import type { NextFunction, Request, Response } from "express";
+import AppError from "../../utils/AppError";
+import jwt, { type JwtPayload } from "jsonwebtoken";
+import DatabaseInstance from "../../middlewares/database";
+
+// Fetch appointments for a patient
+export const getSinglePatientAppointments = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader.startsWith("Bearer ")) {
+      return next(new AppError("Invalid authorization header", 401));
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decodedToken = jwt.decode(token) as JwtPayload;
+    
+    if (!decodedToken || !decodedToken.id) {
+      return next(new AppError("Invalid token", 401));
+    }
+
+    const userId = decodedToken.id;
+
+    const resultList = await DatabaseInstance.collection("Appointments").getList(1, 10, {
+      filter: `patient_id = "${userId}"`,
+      expand: "doctor_id",
+    });
+
+    const formattedAppointments = resultList.items.map((appointment) => {
+      return {
+        id: appointment.id,
+        appointment_date: appointment.appointment_date,
+        consultation_type: appointment.consultation_type,
+        status: appointment.status,
+        doctor: appointment.expand?.doctor_id ? {
+          full_name: appointment.expand.doctor_id.full_name,
+          email: appointment.expand.doctor_id.email,
+          contact: appointment.expand.doctor_id.contact_number,
+          imageUrl: appointment.expand.doctor_id.imageUrl,
+        } : null,
+      };
+    });
+
+    if (!resultList || resultList.items.length === 0) {
+      return next(new AppError("No appointments found", 404));
+    }
+
+    res.status(200).json({ status: "success", data: formattedAppointments });
+
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return next(new AppError("Invalid or expired token", 401));
+    }
+    return next(new AppError("Error fetching appointments", 500));
+  }
+};
+
+// Fetch appointments for a doctor
+export const getSingleDoctorAppointments = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader.startsWith("Bearer ")) {
+      return next(new AppError("Invalid authorization header", 401));
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decodedToken = jwt.decode(token) as JwtPayload;
+
+    if (!decodedToken || !decodedToken.id) {
+      return next(new AppError("Invalid token", 401));
+    }
+
+    const userId = decodedToken.id;
+
+    const resultList = await DatabaseInstance.collection("Appointments").getList(1, 10, {
+      filter: `doctor_id = "${userId}"`,
+      expand: 'patient_id',
+    });
+
+    const formattedAppointments = resultList.items.map((appointment) => {
+      return {
+        id: appointment.id,
+        appointment_date: appointment.appointment_date,
+        consultation_type: appointment.consultation_type,
+        status: appointment.status,
+        patient: appointment.expand?.patient_id ? {
+          full_name: appointment.expand.patient_id.full_name,
+          email: appointment.expand.patient_id.email,
+          contact: appointment.expand.patient_id.contact_number,
+          imageUrl: appointment.expand.patient_id.imageUrl,
+        } : null,
+      };
+    });
+
+    if (!resultList || resultList.items.length === 0) {
+      return next(new AppError("No appointments found", 404));
+    }
+
+    res.status(200).json({ status: "success", data: formattedAppointments });
+
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return next(new AppError("Invalid or expired token", 401));
+    }
+    return next(new AppError("Error fetching appointments", 500));
+  }
+};
+import type { NextFunction, Request, Response } from "express";
+import AppError from "../../utils/AppError";
+import jwt, { type JwtPayload } from "jsonwebtoken";
+import DatabaseInstance from "../../middlewares/database";
+
+/**
+ * Updates an existing appointment record in the database.
+ * 
+ * The function checks if the user is authorized to update the appointment 
+ * (either as a doctor or a patient). It then updates the appointment details 
+ * based on the request body, and responds with the updated appointment data.
+ * 
+ * @param {Request} req - The request object containing the appointment ID in the URL parameters and the new data in the body.
+ * @param {Response} res - The response object used to send back the status and updated data.
+ * @param {NextFunction} next - The next middleware function used to handle errors.
+ * @throws {AppError} 401 - If the authorization token is missing or invalid.
+ * @throws {AppError} 403 - If the user is not authorized to update the appointment.
+ * @throws {AppError} 500 - If there is an error updating the appointment in the database.
+ * 
+ * @returns {Promise<void>} Sends a response with the status `200` and the updated appointment data.
+ */
+export const updateAppointment = async function (req: any, res: Response, next: NextFunction): Promise<void> {
+    try {
+        // Extract the appointment ID from the URL parameters
+        const { id } = req.params;
+
+        // Validate auth header
+        const authHeader = req.headers.authorization;
+        if (!authHeader.startsWith("Bearer ")) {
+            return next(new AppError("Invalid authorization header", 401));
+        }
+
+        // Decode and verify token
+        const token = authHeader.split(" ")[1];
+        const decodedToken = jwt.decode(token) as JwtPayload;
+
+        if (!decodedToken || !decodedToken.id) {
+            return next(new AppError("Invalid token", 401));
+        }
+        const userId = decodedToken.id;
+
+        // Fetch the current appointment from the database
+        const currentAppointment = await DatabaseInstance.collection('Appointments').getOne(id);
+        // Check if the user is either the patient or the doctor for this appointment
+        if (currentAppointment.patient_id !== userId && currentAppointment.doctor_id !== userId) {
+            return next(new AppError("You are not allowed to perform this action", 403));
+        }
+
+        // Extract the updatable fields from the request body
+        const { appointment_date, status, notes, consultation_type, doctor_id, patient_id } = req.body;
+        const updatedData = {
+            appointment_date,
+            status,
+            notes,
+            consultation_type,
+            doctor_id,
+            patient_id: userId, // Ensure the patient ID matches the logged-in user
+        };
+
+        // Update the appointment in the database
+        const updatedRecord = await DatabaseInstance.collection("Appointments").update(id, updatedData);
+
+        // Return the updated appointment data as a response
+        res.status(200).json({
+            status: "success",
+            message: "Appointment updated successfully",
+            data: updatedRecord,
+        });
+    } catch (error) {
+        if (error instanceof jwt.JsonWebTokenError) {
+            return next(new AppError("Invalid or expired token", 401));
+        }
+        return next(new AppError("Error updating appointment", 500));
+    }
 };
 
