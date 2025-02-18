@@ -1,56 +1,85 @@
 import type { NextFunction, Request, Response } from "express";
 import dotenv from "dotenv";
 import validator from "validator";
+import crypto from "crypto"
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import AppError from "../utils/AppError";
 import DatabaseInstance from "../middlewares/database";
+import { sendMail } from "../utils/Email";
+import { generateEmailValidator } from "../utils/EmailVerification";
 
 dotenv.config();
-export const CreateUser = async function (req: Request, res: Response, next: NextFunction) {
+export const CreateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-      const { username, email, password, confirmPassword, role, active = true, contact_number, specialization, full_name } = req.body;
+      const { username, email, password, confirmPassword, role, contact_number, specialization, full_name } = req.body;
 
       if (!username || !email || !password || !confirmPassword) {
-          return next(new AppError("username, email, password, and confirmPassword are required", 400));
+          return next(new AppError("Username, email, password, and confirmPassword are required", 400));
+      }
+
+      // Check if email exists
+      const existingUser = await DatabaseInstance.collection("users")
+          .getFirstListItem(`email="${email}"`)
+          .catch(() => null);
+
+      if (existingUser) {
+          return next(new AppError("This email already exists", 402));
       }
 
       if (password !== confirmPassword) {
-          return next(new AppError("password and confirmPassword do not match", 400));
+          return next(new AppError("Password and confirmPassword do not match", 400));
       }
 
-      // Set default role to "patient" if not provided
+      // Set default role to "patient"
       const userRole = role || "patient";
 
       // Validate role
       const allowedRoles = ["admin", "patient", "doctor"];
-
       if (!allowedRoles.includes(userRole)) {
-          return next(new AppError(`Invalid role.`, 400));
+          return next(new AppError(`Invalid role. Allowed roles: ${allowedRoles.join(", ")}`, 400));
       }
 
-      const data: any = {
+      // Generate email verification token
+      const { randomToken, hashedRandomToken, emailTokenExpiresAt } = generateEmailValidator();
+
+      // Convert expiration date to PocketBase format (ISO string)
+      const formattedEmailTokenExpiresAt = new Date(emailTokenExpiresAt).toISOString();
+
+      const userData: any = {
           username,
           full_name,
           email,
           emailVisibility: true,
-          password: password,
+          password,
           passwordConfirm: password,
           role: userRole,
-          active,
+          active: true,
           contact_number,
+          emailTokenExpiresAt: formattedEmailTokenExpiresAt,
+          hashedRandomToken
       };
 
       // Add specialization only if the role is "doctor"
       if (userRole === "doctor") {
           if (!specialization) {
-              return next(new AppError("Specialization is required for Doctor role.", 400));
+              return next(new AppError("Specialization is required for the Doctor role.", 400));
           }
-          data.specialization = specialization;
+          userData.specialization = specialization;
       }
 
-      const newUser = await DatabaseInstance.collection("users").create(data);
+      // Send verification email
+      await sendMail({
+          email,
+          subject: "Email Verification",
+          from: process.env.BREVO_EMAIL_ADDRESS,
+          name: username,
+          message: "Please verify your email by copying the OTP token below to complete the process.",
+          otp: `${randomToken}`
+      });
 
-      // Respond with success
+      // Create user in PocketBase
+      const newUser = await DatabaseInstance.collection("users").create(userData);
+
       res.status(201).json({
           status: "success",
           data: newUser,
@@ -71,44 +100,80 @@ export const CreateUser = async function (req: Request, res: Response, next: Nex
           return next(new AppError(errorMessage.trim(), 400));
       }
 
+      console.error("User Creation Error:", error);
       return next(new AppError("Failed to create user. Please try again.", 500));
   }
 };
+
 export const EmailVerification = async (req: Request, res: Response, next: NextFunction) => {
   try {
-      const { email } = req.body;
+    const { emailToken } = req.params;
 
-      if (!email) {
-          return next(new AppError("Email is required", 400));
-      }
+    if (!emailToken) {
+      return next(new AppError("OTP token is required", 400));
+    }
 
-      const newUser = await DatabaseInstance.collection('users').getFirstListItem(`email="${email}"`);
-      
-      if (!newUser) {
-          return next(new AppError("This user does not exist", 404));
-      }
+    // Hash the email token to match the stored value
+    const hashedToken = crypto.createHash("sha256").update(emailToken.toString()).digest("hex");
+    console.log("🔹 Hashed Token:", hashedToken);
 
-      // Send verification email
-      const verify = await DatabaseInstance.collection('users').requestVerification(newUser.email);
+    // Get current UTC time
+    const currentUtcTime = new Date().toISOString();
+    console.log("🔹 Current UTC Time:", currentUtcTime);
 
-      res.status(200).json({
-          status: "success",
-          message: "Verification email sent",
-          data: verify
+    // Query the user with the hashed token
+    const user = await DatabaseInstance.collection("users").getFirstListItem(
+      `hashedRandomToken = "${hashedToken}"`
+    );
+
+    if (!user) {
+      return next(new AppError("Invalid or expired OTP token", 403));
+    }
+
+    console.log("✅ User Found:", user);
+
+    if (!user.id) {
+      return next(new AppError("User ID not found, verification failed", 404));
+    }
+
+    // Ensure the token is not expired
+    if (user.emailTokenExpiresAt && new Date(user.emailTokenExpiresAt) < new Date()) {
+      return next(new AppError("OTP token has expired", 403));
+    }
+
+    // Update user verification status
+    console.log("🔹 Updating User ID:", user.id);
+
+    try {
+      await DatabaseInstance.collection("users").update(user.id, {
+        hashedRandomToken: null,
+        emailTokenExpiresAt: null,
+        verified: true, // ✅ Ensure PocketBase allows updating this field
       });
 
+      console.log("✅ User verification updated successfully");
+
+      res.status(200).json({
+        status: "success",
+        message: "Email verified successfully",
+        data: { id: user.id, email: user.email, verified: true },
+      });
+
+    } catch (updateError) {
+      console.error("❌ Error updating user verification:", updateError);
+      return next(new AppError("Failed to update verification status", 500));
+    }
+
   } catch (error: any) {
-      if (error?.status === 404) {
-          return next(new AppError("User not found", 404));
-      }
-      if (error?.data?.code === "validation_invalid_email") {
-          return next(new AppError("Invalid email format", 400));
-      }
-      console.error("Verification error:", error);
-      return next(new AppError("Failed to send verification email", 500));
+    console.error("❌ Email Verification Error:", error);
+
+    if (error?.status === 404) {
+      return next(new AppError("User not found", 404));
+    }
+
+    return next(new AppError("Failed to verify email", 500));
   }
 };
-
 export const ConfirmEmailVerification = async (req: Request, res: Response, next: NextFunction) => {
   try {
       const { token } = req.params;

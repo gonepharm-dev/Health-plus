@@ -27,11 +27,11 @@ router.post('/register', CreateUser);
 router.patch('/deactivate', protect, DeactivateAccount);
 router.patch('/activate', protect, ActivateAccount);
 router.post('/auth-with-password', LoginUser);
-router.post('/request-verification', EmailVerification);
 router.post('/request-password-reset', PasswordReset);
 router.post('/confirm-password-reset', ConfirmPasswordReset)
 
-router.delete('/records/:id', protect, RestrictTo('admin'), DeleteUser)
+router.delete('/records/:id', protect, RestrictTo('admin'), DeleteUser);
+router.patch('/request-verification/:emailToken', EmailVerification);
 router.post('/auth-with-oauth2/:code', OAuth2);
 router.post('/confirm-verification/:token', ConfirmEmailVerification);
 
