@@ -27,13 +27,7 @@
 		{ name: 'About Us', href: '/about' },
 	];
 
-	const toolsItem = {
-		name: 'Health Tools',
-		subItems: [
-			{ name: 'BMI Calculator', href: '/bmi' },
-			{ name: 'Diet Recommendation', href: '/meals' }
-		]
-	};
+	
 
 	let innerWidth: number;
 
@@ -54,22 +48,7 @@
 </script>
 
 <nav class="fixed font-sans inset-x-0 top-0 z-30 w-full transition-all duration-300 text-gray-900 dark:text-white bg-gradient-to-br from-blue-100 to-blue-100 dark:from-gray-900 dark:to-gray-900 border-b border-gray-300 dark:border-gray-700">
-	{#if showBanner}
-		<div class="bg-blue-200 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 lg:px-4">
-			<div class="px-4 mx-auto flex items-center justify-between">
-				<div class="flex-grow text-center py-2">
-					<span class="text-sm mr-1 text-red-500">Disclaimer:</span>
-					<span class="text-sm">Clinic at hand device is at final stage of development</span>
-					<a href="/clinic-at-hand" class="ml-1 text-sm underline hover:text-blue-800 dark:hover:text-blue-300">Learn More</a>
-				</div>
-				<button on:click={closeBanner} class="text-blue-700 dark:text-blue-200 hover:text-blue-800 dark:hover:text-blue-300 flex-shrink-0">
-					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-						<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-					</svg>
-				</button>
-			</div>
-		</div>
-	{/if}
+	
 	<div class="px-4 lg:px-8 mx-auto py-4">
 		<div class="flex items-center justify-between w-full">
 			<div class="flex items-center space-x-4 lg:space-x-6">
@@ -89,22 +68,7 @@
 							<div class="bg-[#007EFF] h-[2px] w-0 group-hover:w-full transition-all duration-500"></div>
 						</div>
 					{/each}
-					<div class="relative group">
-						<button
-							class="inline-block text-base font-medium text-gray-900 dark:text-gray-100 hover:text-[#007EFF] dark:hover:text-[#007EFF] transition-colors duration-300 border-l border-gray-400 dark:border-gray-500 px-4"
-						>
-							{toolsItem.name}
-						</button>
-						{#if toolsItem.subItems}
-							<div class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 invisible group-hover:visible transition-all duration-200">
-								{#each toolsItem.subItems as subItem}
-									<a href={subItem.href} class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">
-										{subItem.name}
-									</a>
-								{/each}
-							</div>
-						{/if}
-					</div>
+					
 				</div>
 			</div>
 
@@ -125,14 +89,7 @@
 			</div>
 
 			<div class="flex items-center lg:hidden">
-				<button
-					on:click={toggleMenu}
-					class="inline-flex items-center justify-center p-2 rounded-md text-[#007EFF] hover:text-blue-700 hover:bg-blue-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#007EFF]"
-				>
-					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-						<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-					</svg>
-				</button>
+				
 			</div>
 		</div>
 	</div>
@@ -144,14 +101,14 @@
 		>
 			<div class="flex flex-col h-full">
 				<div class="p-5">
-					<button
+					<!-- <button
 						on:click={toggleMenu}
 						class="absolute top-4 right-4 text-[#007EFF] hover:text-blue-700"
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
 							<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
 						</svg>
-					</button>
+					</button> -->
 					<div class="mt-8 space-y-4">
 						{#each navItems as item}
 							<div>
@@ -164,30 +121,7 @@
 								</a>
 							</div>
 						{/each}
-						<div>
-							<button 
-								class="flex justify-between items-center w-full rounded-lg px-3 py-2 text-base font-medium text-gray-900 dark:text-gray-100 hover:text-[#007EFF] dark:hover:text-[#007EFF] transition-colors duration-200" 
-								on:click={toggleDropdown}
-							>
-								{toolsItem.name}
-								<svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-								</svg>
-							</button>
-							{#if isDropdownOpen}
-								<div transition:slide="{{ duration: 300 }}" class="ml-4 mt-2 space-y-2">
-									{#each toolsItem.subItems as subItem}
-										<a 
-											class="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-[#007EFF] dark:hover:text-[#007EFF] transition-colors duration-200" 
-											href={subItem.href} 
-											on:click={toggleMenu}
-										>
-											{subItem.name}
-										</a>
-									{/each}
-								</div>
-							{/if}
-						</div>
+						
 						<a
 							class="block rounded-lg px-3 py-2 text-base font-medium text-gray-900 dark:text-gray-100 hover:text-[#007EFF] dark:hover:text-[#007EFF] transition-colors duration-200"
 							href='/results/nearest-facility' on:click={toggleMenu}>Find Nearest Facility</a

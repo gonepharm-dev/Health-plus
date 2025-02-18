@@ -4,6 +4,9 @@
   function joinConsultation() {
     goto('/appointment?role=patient');
   }
+  function home() {
+    goto('/');
+  }
 </script>
 
 <div class=" p-8">
@@ -32,6 +35,9 @@
       >
        Take me to the Doctor
       </a>
+      <button on:click={home}>
+        Home
+      </button>
     </div>
   </div>
 </div>
