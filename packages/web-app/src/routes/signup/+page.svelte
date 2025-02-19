@@ -2,11 +2,12 @@
   import { onMount, tick } from 'svelte';
   import { slide } from 'svelte/transition';
   import { goto } from '$app/navigation';
-  import { auth } from '$lib/stores/auth';
   import { verificationStore } from '$lib/stores/verification';
-  import { register, verifyEmail, loginWithGoogle } from '$lib/api/auth';
   import GoogleIcon from '$lib/assets/google.svg';
-
+  import { registerUser } from '$lib/services/authService';
+  import { auth } from '$lib/stores/auth';
+	import { loginWithGoogle } from '$lib/services/authService';
+	import OtpVerification from '$lib/components/OtpVerification.svelte';
   export let data; // Get the data from +page.ts
 
   let step = 1;
@@ -14,22 +15,23 @@
   let error: string | null = null;
   let success: string | null = null;
   let verificationToken = '';
+  let showResendOption = false
   // Add this at the top of your script
 type UserRole = 'patient' | 'doctor' | 'admin';
 let userEmail = ''; // Store email for display
 
 
-  // Form validation states
-  let formData = {
+let formData = {
     username: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'patient' as UserRole, // Use the UserRole type
+    role: 'patient',
     contact_number: '',
     specialization: '',
     full_name: ''
-};
+  };
+  
 
   // Improved validation
   $: isPasswordValid = formData.password.length >= 8;
@@ -43,73 +45,45 @@ let userEmail = ''; // Store email for display
       formData.full_name?.trim() && 
       (formData.role !== 'doctor' || formData.specialization?.trim());
 
-  // Enhanced registration handler
-  async function handleSubmit(event: Event) {
-      event.preventDefault();
-      if (!isFormValid || loading) return;
-
-      loading = true;
-      error = null;
-      success = null;
-
-      try {
-          const response = await register(formData);
-          
-          // Store verification data
-          verificationStore.setVerificationData(formData.email, response.data?.verificationToken);
-          
-          // Move to verification step
-          step = 2;
-          success = 'Please check your email for the verification code.';
-      } catch (err: any) {
-          error = err.message || 'Registration failed. Please try again.';
-          console.error('Registration error:', err);
-      } finally {
-          loading = false;
-      }
-  }
-
-  // Enhanced verification handler
-  async function handleVerification() {
-    if (!verificationToken.match(/^[0-9]{6}$/)) {
-        error = 'Please enter a valid 6-digit code';
-        return;
-    }
+async function handleSubmit(event: Event) {
+    event.preventDefault();
+    if (!isFormValid || loading) return;
     
-    if (loading) return;
-
     loading = true;
     error = null;
-    success = null;
-
+    
     try {
-        console.log('Starting verification process...');
-        const response = await verifyEmail(verificationToken);
-        console.log('Verification response:', response);
-
-        if (response.status === "success") {
-            success = response.message || 'Email verified successfully!';
-            
-            if (response.data) {
-                auth.setUser(response.data);
-            }
-            
-            // Clear verification store
-            verificationStore.clear();
-            
-            // Show success message before redirect
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            goto('/dashboard');
+      await registerUser({
+        ...formData,
+        passwordConfirm: formData.confirmPassword
+      });
+      
+      step = 2;
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message.includes('email')) {
+          error = 'Email is invalid or already in use';
+        } else if (err.message.includes('username')) {
+          error = 'Username is invalid or already in use';
+        } else if (err.message.includes('password')) {
+          error = 'Password doesn\'t meet requirements';
         } else {
-            throw new Error(response.message || 'Verification failed');
+          error = err.message;
         }
-    } catch (err: any) {
-        console.error('Verification error:', err);
-        error = err.message || 'Verification failed. Please try again.';
+      } else {
+        error = 'Registration failed. Please try again.';
+      }
     } finally {
-        loading = false;
+      loading = false;
     }
-}
+  }
+  
+function handleVerificationSuccess() {
+    // Redirect to dashboard after successful verification
+    setTimeout(() => {
+      goto('/patient');
+    }, 1500);
+  }
   // Enhanced Google signup handler
   async function handleGoogleSignup() {
       if (loading) return;
@@ -163,7 +137,6 @@ let userEmail = ''; // Store email for display
       }
   }
 
-  // Reset error/success messages when switching steps
   $: if (step) {
       error = null;
       success = null;
@@ -352,53 +325,9 @@ let userEmail = ''; // Store email for display
 
 <!-- Step 2: OTP Verification -->
 {:else}
-<div class="min-h-screen flex items-center justify-center px-4 bg-gray-50">
-    <div class="max-w-md w-full space-y-8">
-        <div class="text-center">
-            <h2 class="mt-6 text-3xl font-bold text-gray-900">Verify your email</h2>
-            <p class="mt-2 text-sm text-gray-600">
-                We've sent a verification code to {userEmail}
-            </p>
-        </div>
+<OtpVerification 
+email={formData.email} 
+onVerificationSuccess={handleVerificationSuccess}
+/>
 
-        {#if error}
-            <div class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600" transition:slide>
-                {error}
-            </div>
-        {/if}
-
-        {#if success}
-            <div class="p-4 bg-green-50 border border-green-200 rounded-lg text-green-600" transition:slide>
-                {success}
-            </div>
-        {/if}
-
-        <div class="mt-8 space-y-6">
-            <div>
-                <label for="token" class="sr-only">Verification Code</label>
-                <input
-                    type="text"
-                    id="token"
-                    bind:value={verificationToken}
-                    placeholder="Enter 6-digit verification code"
-                    class="appearance-none relative block w-full px-3 py-4 border border-gray-400 bg-transparent placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-[#3b82f6] focus:border-[#3b82f6] focus:z-10 sm:text-sm"
-                    required
-                    maxlength="6"
-                    pattern="[0-9]{6}"
-                />
-            </div>
-
-            <div>
-                <button
-                    type="button"
-                    on:click={handleVerification}
-                    class="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#1D5DEC] hover:bg-[#1D5DEC]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3b82f6]"
-                    disabled={loading || !verificationToken.match(/^[0-9]{6}$/)}
-                >
-                    {loading ? 'Verifying...' : 'Verify Email'}
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 {/if}

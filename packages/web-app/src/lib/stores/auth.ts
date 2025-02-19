@@ -1,68 +1,125 @@
-import { writable } from 'svelte/store';
+// src/lib/stores/auth.ts
+import { writable, derived } from 'svelte/store';
+import type { User } from '$lib/types/collection';
 import { browser } from '$app/environment';
-import type { Writable } from 'svelte/store';
 
-export interface User {
-    id: string;
-    email: string;
-    username: string;
-    role: 'admin' | 'patient' | 'doctor';
-    verified: boolean;
-    full_name: string;
-    contact_number: string;
-    specialization?: string;
-}
-
-interface AuthState {
-    user: User | null;
-    token: string | null;
-    loading: boolean;
-    error: string | null;
-}
-
-const initialState: AuthState = {
-    user: null,
-    token: null,
-    loading: false,
-    error: null
+// Initial state
+const initialState = {
+  user: null as User | null,
+  token: null as string | null,
+  isAuthenticated: false
 };
 
+// Create the store
 function createAuthStore() {
-    let currentState: AuthState;  // Add this line
-    const storedAuth = browser ? localStorage.getItem('auth') : null;
-    const initialAuth: AuthState = storedAuth ? JSON.parse(storedAuth) : initialState;
+  const { subscribe, set, update } = writable(initialState);
 
-    const { subscribe, set, update }: Writable<AuthState> = writable(initialAuth);
+  // Initialize from localStorage if available
+  if (browser) {
+    const storedUser = localStorage.getItem('user');
+    const storedToken = localStorage.getItem('token');
+    
+    if (storedUser && storedToken) {
+      try {
+        const user = JSON.parse(storedUser);
+        set({
+          user,
+          token: storedToken,
+          isAuthenticated: true
+        });
+      } catch (e) {
+        // Invalid stored data, clear it
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
+    }
+  }
 
-    // Keep track of current state
-    subscribe(state => {
-        currentState = state;
-    });
-
-    return {
-        subscribe,
-        setUser: (user: User | null) => 
-            update(state => {
-                const newState = { ...state, user };
-                if (browser) localStorage.setItem('auth', JSON.stringify(newState));
-                return newState;
-            }),
-        setToken: (token: string | null) => 
-            update(state => {
-                const newState = { ...state, token };
-                if (browser) localStorage.setItem('auth', JSON.stringify(newState));
-                return newState;
-            }),
-        getToken: () => currentState?.token ?? null,
-        setLoading: (loading: boolean) => 
-            update(state => ({ ...state, loading })),
-        setError: (error: string | null) => 
-            update(state => ({ ...state, error })),
-        logout: () => {
-            set(initialState);
-            if (browser) localStorage.removeItem('auth');
+  return {
+    subscribe,
+    
+    // Set user
+    setUser: (user: User | null) => {
+      update(state => {
+        const newState = { ...state, user, isAuthenticated: !!user };
+        
+        if (browser) {
+          if (user) {
+            localStorage.setItem('user', JSON.stringify(user));
+          } else {
+            localStorage.removeItem('user');
+          }
         }
-    };
+        
+        return newState;
+      });
+    },
+    
+    // Set token
+    setToken: (token: string | null) => {
+      update(state => {
+        const newState = { ...state, token };
+        
+        if (browser) {
+          if (token) {
+            localStorage.setItem('token', token);
+          } else {
+            localStorage.removeItem('token');
+          }
+        }
+        
+        return newState;
+      });
+    },
+    
+    // Set both user and token (for login)
+    authenticate: (user: User, token: string) => {
+      update(state => {
+        const newState = { 
+          user, 
+          token, 
+          isAuthenticated: true 
+        };
+        
+        if (browser) {
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('token', token);
+        }
+        
+        return newState;
+      });
+    },
+    
+    // Clear auth data (for logout)
+    logout: () => {
+      if (browser) {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
+      set(initialState);
+    },
+    
+    // Update user data
+    updateUser: (updatedData: Partial<User>) => {
+      update(state => {
+        if (!state.user) return state;
+        
+        const updatedUser = { ...state.user, ...updatedData };
+        
+        if (browser) {
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        }
+        
+        return { ...state, user: updatedUser };
+      });
+    }
+  };
 }
 
+// Export the store
 export const auth = createAuthStore();
+
+// Derived stores for convenience
+export const currentUser = derived(auth, $auth => $auth.user);
+export const isAuthenticated = derived(auth, $auth => $auth.isAuthenticated);
+export const userRole = derived(auth, $auth => $auth.user?.role);
