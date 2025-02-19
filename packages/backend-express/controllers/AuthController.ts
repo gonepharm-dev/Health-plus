@@ -107,96 +107,111 @@ export const CreateUser = async (req: Request, res: Response, next: NextFunction
 
 export const EmailVerification = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { emailToken } = req.params;
+      const { emailToken } = req.params;
 
-    if (!emailToken) {
-      return next(new AppError("OTP token is required", 400));
-    }
+      if (!emailToken) {
+          return next(new AppError("OTP token is required", 400));
+      }
 
-    // Hash the email token to match the stored value
-    const hashedToken = crypto.createHash("sha256").update(emailToken.toString()).digest("hex");
-    console.log("🔹 Hashed Token:", hashedToken);
+      try {
+          // Hash the received token
+          const hashedToken = crypto.createHash('sha256').update(emailToken).digest('hex');
 
-    // Get current UTC time
-    const currentUtcTime = new Date().toISOString();
-    console.log("🔹 Current UTC Time:", currentUtcTime);
+          // Query the user with the hashed token
+          const user = await DatabaseInstance.collection("users").getFirstListItem(
+              `hashedRandomToken = "${hashedToken}"`
+          );
 
-    // Query the user with the hashed token
-    const user = await DatabaseInstance.collection("users").getFirstListItem(
-      `hashedRandomToken = "${hashedToken}"`
-    );
+          if (!user) {
+              return next(new AppError("Invalid OTP token", 403));
+          }
 
-    if (!user) {
-      return next(new AppError("Invalid or expired OTP token", 403));
-    }
+          // Check token expiration
+          if (user.emailTokenExpiresAt && new Date(user.emailTokenExpiresAt) < new Date()) {
+              return next(new AppError("OTP token has expired", 403));
+          }
 
-    console.log("✅ User Found:", user);
+          // Update user verification status directly
+          await DatabaseInstance.collection("users").update(user.id, {
+              "hashedRandomToken": null,
+              "emailTokenExpiresAt": null,
+              "verified": true
+          });
 
-    if (!user.id) {
-      return next(new AppError("User ID not found, verification failed", 404));
-    }
+          res.status(200).json({
+              status: "success",
+              message: "Email verified successfully",
+              data: {
+                  id: user.id,
+                  email: user.email,
+                  verified: true
+              }
+          });
 
-    // Ensure the token is not expired
-    if (user.emailTokenExpiresAt && new Date(user.emailTokenExpiresAt) < new Date()) {
-      return next(new AppError("OTP token has expired", 403));
-    }
-
-    // Update user verification status
-    console.log("🔹 Updating User ID:", user.id);
-
-    try {
-      await DatabaseInstance.collection("users").update(user.id, {
-        hashedRandomToken: null,
-        emailTokenExpiresAt: null,
-        verified: true, // ✅ Ensure PocketBase allows updating this field
-      });
-
-      console.log("✅ User verification updated successfully");
-
-      res.status(200).json({
-        status: "success",
-        message: "Email verified successfully",
-        data: { id: user.id, email: user.email, verified: true },
-      });
-
-    } catch (updateError) {
-      console.error("❌ Error updating user verification:", updateError);
-      return next(new AppError("Failed to update verification status", 500));
-    }
+      } catch (updateError) {
+          console.error("Verification update error:", updateError);
+          return next(new AppError("Failed to verify email", 500));
+      }
 
   } catch (error: any) {
-    console.error("❌ Email Verification Error:", error);
-
-    if (error?.status === 404) {
-      return next(new AppError("User not found", 404));
-    }
-
-    return next(new AppError("Failed to verify email", 500));
+      console.error("Verification error:", error);
+      return next(new AppError("Failed to verify email", 500));
   }
 };
+
 export const ConfirmEmailVerification = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-      const { token } = req.params;
+    try {
+        const { token } = req.params;
 
-      if (!token) {
-          return next(new AppError("Email is required", 400));
-      }
+        if (!token) {
+            return next(new AppError("Verification token is required", 400));
+        }
 
-      // confirm email verification
-      const verify = await DatabaseInstance.collection('users').confirmVerification(token);
+        try {
+            // Query the user with the token
+            const user = await DatabaseInstance.collection("users").getFirstListItem(
+                `hashedRandomToken = "${token}"`
+            );
 
-      res.status(200).json({
-          status: "success",
-          message: "Email verified",
-          data: verify
-      });
-  } catch (error: any) {
-      if (error?.data?.code === "validation_invalid_email") {
-          return next(new AppError("Invalid email format", 400));
-      }
-      console.error("Verification error:", error);
-      return next(new AppError("Failed to send verification email", 500));
-  }
+            if (!user) {
+                return next(new AppError("Invalid or expired token", 403));
+            }
+
+            // Check token expiration
+            if (user.emailTokenExpiresAt && new Date(user.emailTokenExpiresAt) < new Date()) {
+                return next(new AppError("Token has expired", 403));
+            }
+
+            // Confirm verification using PocketBase's method
+            await DatabaseInstance.collection("users").confirmVerification(user.id);
+
+            // Clear verification tokens
+            await DatabaseInstance.collection("users").update(user.id, {
+                "hashedRandomToken": null,
+                "emailTokenExpiresAt": null
+            });
+
+            res.status(200).json({
+                status: "success",
+                message: "Email verified successfully",
+                data: {
+                    id: user.id,
+                    email: user.email,
+                    verified: true
+                }
+            });
+
+        } catch (updateError) {
+            console.error("Verification update error:", updateError);
+            return next(new AppError("Failed to verify email", 500));
+        }
+    } catch (error: any) {
+        console.error("Verification error:", error);
+        if (error?.data?.code === "validation_invalid_token") {
+            return next(new AppError("Invalid verification token", 400));
+        }
+        return next(new AppError("Failed to verify email", 500));
+    }
 };
 
 // login user

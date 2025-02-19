@@ -1,30 +1,68 @@
 import { writable } from 'svelte/store';
+import { browser } from '$app/environment';
+import type { Writable } from 'svelte/store';
 
-export type RegistrationStep = 'name' | 'email' | 'password' | 'confirmPassword' | 'role';
-
-interface AuthState {
-    token: string | null;
-    isAuthenticated: boolean;
+export interface User {
+    id: string;
+    email: string;
+    username: string;
+    role: 'admin' | 'patient' | 'doctor';
+    verified: boolean;
+    full_name: string;
+    contact_number: string;
+    specialization?: string;
 }
 
+interface AuthState {
+    user: User | null;
+    token: string | null;
+    loading: boolean;
+    error: string | null;
+}
+
+const initialState: AuthState = {
+    user: null,
+    token: null,
+    loading: false,
+    error: null
+};
+
 function createAuthStore() {
-    const { subscribe, set, update } = writable<AuthState>({
-        token: null,
-        isAuthenticated: false
+    let currentState: AuthState;  // Add this line
+    const storedAuth = browser ? localStorage.getItem('auth') : null;
+    const initialAuth: AuthState = storedAuth ? JSON.parse(storedAuth) : initialState;
+
+    const { subscribe, set, update }: Writable<AuthState> = writable(initialAuth);
+
+    // Keep track of current state
+    subscribe(state => {
+        currentState = state;
     });
 
     return {
         subscribe,
-        setToken: (token: string) => {
-            // Set secure HTTP-only cookie
-            document.cookie = `auth_token=${token}; path=/; max-age=604800; secure; samesite=strict`;
-            update(state => ({ ...state, token, isAuthenticated: true }));
-        },
+        setUser: (user: User | null) => 
+            update(state => {
+                const newState = { ...state, user };
+                if (browser) localStorage.setItem('auth', JSON.stringify(newState));
+                return newState;
+            }),
+        setToken: (token: string | null) => 
+            update(state => {
+                const newState = { ...state, token };
+                if (browser) localStorage.setItem('auth', JSON.stringify(newState));
+                return newState;
+            }),
+        getToken: () => currentState?.token ?? null,
+        setLoading: (loading: boolean) => 
+            update(state => ({ ...state, loading })),
+        setError: (error: string | null) => 
+            update(state => ({ ...state, error })),
         logout: () => {
-            document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-            set({ token: null, isAuthenticated: false });
+            set(initialState);
+            if (browser) localStorage.removeItem('auth');
         }
     };
 }
 
-export const authStore = createAuthStore();
+export const auth = createAuthStore();
