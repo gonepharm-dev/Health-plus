@@ -10,7 +10,7 @@ export default defineConfig({
 	server: {
 		fs: {
 		  allow: [
-			'/Users/Mikemax/dev/Health-plus/packages/web-app',
+			';Health-plus/packages/web-app',
 			'/Users/Mikemax/dev/Health-plus/node_modules',
 		  ],
 		},
