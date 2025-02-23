@@ -16,7 +16,6 @@
   let success: string | null = null;
   let verificationToken = '';
   let showResendOption = false
-  // Add this at the top of your script
 type UserRole = 'patient' | 'doctor' | 'admin';
 let userEmail = ''; // Store email for display
 
@@ -79,12 +78,10 @@ async function handleSubmit(event: Event) {
   }
   
 function handleVerificationSuccess() {
-    // Redirect to dashboard after successful verification
     setTimeout(() => {
       goto('/patient');
     }, 1500);
   }
-  // Enhanced Google signup handler
   async function handleGoogleSignup() {
       if (loading) return;
       
@@ -176,8 +173,6 @@ function handleVerificationSuccess() {
           </div>
       </div>
   </div>
-
-  <!-- Right Panel: Registration Form -->
   <div class="flex w-full flex-col p-8 md:w-2/3 md:p-16 max-w-4xl mx-auto">
     <div>
       

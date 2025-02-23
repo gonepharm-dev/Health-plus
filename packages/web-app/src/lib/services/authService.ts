@@ -1,6 +1,6 @@
 import pb from '$lib/pocketbase';
 import { auth } from '$lib/stores/auth';
-import type { User, RegistrationData, AuthResponse } from '$lib/types/collection';
+import type { User, RegistrationData, AuthResponse } from '$lib/types/';
 import { generateEmailVerificationToken } from '$lib/utils/tokenGenerator';
 import { emailService } from './emailService'
 import { otpService } from './otpService';
@@ -48,16 +48,24 @@ export async function registerUser(userData: Omit<RegistrationData, 'hashedRando
  */
 export async function login(email: string, password: string): Promise<AuthResponse> {
   try {
+    // Use PocketBase authWithPassword
     const authData = await pb.collection('users').authWithPassword(email, password);
     
-    // Update auth store
+    // Update auth store - this is crucial
     auth.authenticate(authData.record as unknown as User, authData.token);
+    
+    console.log('Login successful, auth state:', {
+      user: authData.record,
+      token: authData.token,
+      isValid: pb.authStore.isValid
+    });
     
     return {
       token: authData.token,
       record: authData.record as unknown as User
     };
   } catch (error: unknown) {
+    console.error('Login error:', error);
     throw handleAuthError(error);
   }
 }
