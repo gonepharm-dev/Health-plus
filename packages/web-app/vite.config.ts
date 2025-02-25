@@ -1,18 +1,20 @@
-import { defineConfig } from 'vitest/config';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export default defineConfig({
-	plugins: [sveltekit()],
-
-	test: {
-		include: ['src/**/*.{test,spec}.{js,ts}']
-	},
-	server: {
-		fs: {
-		  allow: [
-			'/Users/Mikemax/dev/Health-plus/packages/web-app',
-			'/Users/Mikemax/dev/Health-plus/node_modules',
-		  ],
-		},
-	  },
+  plugins: [sveltekit()],
+  server: {
+    fs: {
+      allow: [
+        resolve(__dirname),
+        resolve(__dirname, 'node_modules/@sveltejs/kit'),
+        resolve(__dirname, '../../node_modules'),
+      ],
+    },
+  },
 });

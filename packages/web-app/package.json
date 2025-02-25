@@ -36,16 +36,16 @@
 		"@types/node": "^20.5.9"
 	},
 	"dependencies": {
+		"@elysiajs/cors": "^1.2.0",
 		"@tailwindcss/forms": "^0.5.9",
 		"@tailwindcss/typography": "^0.5.15",
 		"@types/jsonwebtoken": "^9.0.8",
-		"esbuild": "^0.24.0",
-		"@elysiajs/cors": "^1.2.0",
 		"@videosdk.live/js-sdk": "^0.1.4",
 		"elysia": "^1.2.11",
+		"esbuild": "^0.24.0",
 		"jsonwebtoken": "^9.0.2",
 		"lucide-svelte": "^0.468.0",
-		"pocketbase": "^0.22.1",
+		"pocketbase": "^0.25.1",
 		"std-env": "^3.3.0"
 	}
 }
