@@ -7,7 +7,8 @@
     import { goto } from '$app/navigation';
     import { slide } from 'svelte/transition';
     import { flip } from 'svelte/animate';
-  
+    import { pb } from '$lib/pocketbase'; // Import PocketBase client
+
     interface Participant {
       id: string;
       displayName: string;
@@ -148,6 +149,14 @@
   
         setupVideoElement(localParticipantId, role, true);
         isLoading = false;
+        // Record the start time and create a new entry in the VideoSessions collection
+        const startTime = new Date().toISOString();
+        const videoSession = await pb.collection('VideoSessions').create({
+          appointment_id: data.roomId,
+          session_start: startTime,
+          session_url: window.location.href
+        });
+        localStorage.setItem('videoSessionId', videoSession.id);
   
       } catch (err) {
         error = err instanceof Error ? err.message : 'Failed to initialize meeting';
@@ -218,7 +227,15 @@
           if (videoContainer) videoContainer.remove();
           if (audioElement) audioElement.remove();
         });
-  
+        // Record the end time and update the entry in the Video Sessions collection
+        const endTime = new Date().toISOString();
+        const videoSessionId = localStorage.getItem('videoSessionId');
+        if (videoSessionId) {
+           await pb.collection('VideoSessions').update(videoSessionId, {
+             session_end: endTime
+        });
+        localStorage.removeItem('videoSessionId');
+      }
         await goto('/');
       } catch (err) {
         console.error('Error ending meeting:', err);
