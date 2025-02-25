@@ -2,15 +2,15 @@ import express from "express";
 import multer from "multer";
 
 import AppError from "../utils/AppError";
-import { CreateUser } from "../controllers/Auth/createUser";
-import { EmailVerification } from "../controllers/Auth/emailVerification";
-import { ConfirmEmailVerification } from "../controllers/Auth/emailConfirm";
-import { LoginUser } from "../controllers/Auth/loginUser";
+import { CreateUser } from "../controllers/AuthController";
+import { EmailVerification } from "../controllers/AuthController";
+import { ConfirmEmailVerification } from "../controllers/AuthController";
+import { LoginUser } from "../controllers/AuthController";
 import { protect } from "../controllers/Auth/protect";
 import { RestrictTo } from "../controllers/Auth/restrictTo";
 import { PasswordReset } from "../controllers/Auth/updateUser";
 import { ConfirmPasswordReset } from "../controllers/Auth/confirmPassword";
-import { OAuth2 } from "../controllers/Auth/oath";
+import { OAuth2 } from "../controllers/AuthController";
 import { getAllUsers } from "../controllers/Auth/getAllUsers";
 import { DeleteUser } from "../controllers/Auth/deleteUser";
 import { DeactivateAccount } from "../controllers/Auth/deactivateAccount";
@@ -44,6 +44,7 @@ router.post('/confirm-password-reset', ConfirmPasswordReset)
 
 router.delete('/records/:id', protect, RestrictTo('admin'), DeleteUser);
 router.patch('/request-verification/:emailToken', EmailVerification);
+// router.post('/resend-verification', ResendVerification);
 router.post('/auth-with-oauth2/:code', OAuth2);
 router.post('/confirm-verification/:token', ConfirmEmailVerification);
 
