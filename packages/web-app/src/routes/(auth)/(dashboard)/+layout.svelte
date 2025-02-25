@@ -1,168 +1,102 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { PieChart, Users, Box, MessageCircle, CreditCard, Settings, Shield } from 'lucide-svelte';
 	import type { SvelteComponent } from 'svelte';
-	import { Activity, Users, Calendar, Settings, MessageSquare, LogOut } from 'lucide-svelte';
-	import type { NavigationItem } from '$lib/types/navigation';
-
-	export let navigation: Array<{
-		href: string;
-		label: string;
-		icon: typeof SvelteComponent;
-		roles?: Array<'doctor' | 'patient'>;
-	}>;
-
-	export let onLogout: () => void = () => {};
-	export let userRole: 'doctor' | 'patient' = 'patient';
-
-	$: filteredNavigation = navigation.filter((item) => !item.roles || item.roles.includes(userRole));
-	const doctorNavigation: NavigationItem[] = [
-		{
-			href: '/doctor/appointments',
-			label: 'Appointments',
-			icon: Calendar,
-			roles: ['doctor']
-		},
-		{
-			href: '/doctor/patients',
-			label: 'Patients',
-			icon: Users,
-			roles: ['doctor']
-		},
-		{
-			href: '/doctor/consultations',
-			label: 'Consultations',
-			icon: MessageSquare,
-			roles: ['doctor']
-		},
-		{
-			href: '/doctor/settings',
-			label: 'Settings',
-			icon: Settings,
-			roles: ['doctor']
-		}
+	import { currentUser } from '$lib/stores/auth';
+	import { derived } from 'svelte/store';
+	import { auth } from '$lib/stores/auth'; // Import the auth store
+	import { goto } from '$app/navigation'; // Import the goto function
+  
+	export let onLogout: () => void = () => {
+		auth.logout(); // Call the logout method from the auth store
+		goto('/sign-in'); // Redirect to the sign-in page
+	};
+  
+	const menuItems = [
+	  {
+		section: 'Overview',
+		items: [
+		  { href: '/doctor', label: 'Dashboard', icon: Box },
+		  { href: '/appointment', label: 'Appointments', icon: MessageCircle },
+		  { href: '/statistics', label: 'Doctors', icon: Users },
+		  { href: '/customers', label: 'Records', icon: MessageCircle },
+		  { href: '/product', label: 'Consultations', icon: CreditCard },
+		  { href: '/messages', label: 'Messages', icon: MessageCircle, unreadCount: 5 }
+		]
+	  },
+	  {
+		section: 'GENERAL',
+		items: [
+		  { href: '/settings', label: 'Settings', icon: Settings },
+		  { href: '/security', label: 'Security', icon: Shield }
+		]
+	  }
 	];
 
-	const patientNavigation = [
-		{
-			href: '/appointment',
-			label: 'My Appointments',
-			icon: Calendar,
-			roles: ['patient']
-		},
-		{
-			href: '/patient/doctors',
-			label: 'Find Doctors',
-			icon: Users,
-			roles: ['patient']
-		},
-		{
-			href: '/patient/consultations',
-			label: 'My Consultations',
-			icon: MessageSquare,
-			roles: ['patient']
-		},
-		{
-			href: '/patient/health',
-			label: 'Health Records',
-			icon: Activity,
-			roles: ['patient']
-		},
-		{
-			href: '/patient/settings',
-			label: 'Settings',
-			icon: Settings,
-			roles: ['patient']
-		}
-	];
-
-	// Determine user role based on URL
-	$: isDoctor = $page.url.pathname.startsWith('/doctor');
-	$: navigation = isDoctor ? doctorNavigation : patientNavigation;
-	$: userRole = isDoctor ? 'doctor' : 'patient';
-
-	function handleLogout() {
-		console.log('Chill msee');
-	}
+	// Derived store to get the username in uppercase
+	const username = derived(currentUser, $currentUser => $currentUser ? $currentUser.username.toUpperCase() : 'GUEST');
 </script>
-
-<div class="container mx-auto max-w-full py-8">
-	<!-- Mobile Navigation -->
-	<div class="px-2 lg:hidden min-h-screen">
-		<div class="border-b border-gray-300">
-			<div
-				class="scrollbar-hide flex flex-row justify-between space-x-1 overflow-x-auto md:justify-evenly"
-			>
-				{#each filteredNavigation as item}
-					<a
-						href={item.href}
-						class="flex-shrink-0 whitespace-nowrap border-b-2 pb-2 text-xs font-medium md:text-base
-              {$page.url.pathname === item.href
-							? 'border-blue-500 text-blue-600'
-							: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'}"
-					>
-						<div class="flex items-center space-x-1">
-							<svelte:component this={item.icon} class="h-3 w-3 md:h-5 md:w-5" />
-							<span>{item.label}</span>
-						</div>
-					</a>
+  
+  <div class="flex min-h-screen bg-gray-100">
+	<!-- Sidebar -->
+	<aside class="w-64 bg-white shadow-lg">
+	  <div class="p-6">
+		<!-- Logo or Brand Name -->
+		<h1 class="text-xl font-bold text-gray-800 flex items-center">
+			<img src="/logo.png" alt="HealthPlus Logo" class="h-8 w-auto mr-2" />
+			HealthPlus
+		</h1>
+  
+		<!-- Menu Sections -->
+		<div class="mt-8">
+		  {#each menuItems as section}
+			<div class="mb-6">
+			  <!-- Section Title -->
+			  <h3 class="text-xs font-semibold uppercase text-gray-500 mb-2">{section.section}</h3>
+  
+			  <!-- Menu Items -->
+			  <div class="space-y-1">
+				{#each section.items as item}
+				  <a
+					href={item.href}
+					class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition-all duration-200"
+				  >
+					<svelte:component this={item.icon} class="mr-3 h-5 w-5 text-gray-500" />
+					<span>{item.label}</span>
+					{#if item.unreadCount > 0}
+					  <span class="ml-2 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full">
+						{item.unreadCount}
+					  </span>
+					{/if}
+				  </a>
 				{/each}
+			  </div>
 			</div>
+		  {/each}
 		</div>
-	</div>
-
-	<div class="mt-8 lg:grid lg:grid-cols-12 lg:gap-x-2">
-		<!-- Desktop Sidebar -->
-		<aside class="hidden lg:col-span-2 lg:block">
-			<div class="sticky top-8 flex items-center">
-				<nav class="w-full space-y-2 rounded-2xl border bg-white px-2 py-6 shadow-lg">
-					{#each filteredNavigation as item}
-						<a
-							href={item.href}
-							class="flex items-center rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200
-                {$page.url.pathname === item.href
-								? 'bg-blue-50 text-blue-600'
-								: 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}"
-						>
-							<svelte:component
-								this={item.icon}
-								class="mr-3 h-4 w-4 flex-shrink-0
-                  {$page.url.pathname === item.href
-									? 'text-blue-600'
-									: 'text-gray-400 group-hover:text-gray-500'}"
-							/>
-							<span>{item.label}</span>
-						</a>
-					{/each}
-
-					<!-- Logout Button -->
-					<button
-						on:click={onLogout}
-						class="flex w-full items-center rounded-xl px-4 py-3 text-sm font-medium
-              text-gray-600 transition-all duration-200 hover:bg-red-50 hover:text-red-600"
-					>
-						<LogOut class="mr-3 h-4 w-4 flex-shrink-0" />
-						<span>Logout</span>
-					</button>
-				</nav>
-			</div>
-		</aside>
-
-		<!-- Main Content -->
-		<main class="space-y-6 lg:col-span-10">
-			<div class="">
-				<slot />
-			</div>
-		</main>
-	</div>
-</div>
-
-<style>
-	/* Hide scrollbar but maintain functionality */
-	.scrollbar-hide {
-		-ms-overflow-style: none;
-		scrollbar-width: none;
-	}
-	.scrollbar-hide::-webkit-scrollbar {
-		display: none;
-	}
-</style>
+		<hr class="my-4 border-t border-gray-600 w-full" />
+		<!-- Employee/Name Link -->
+		<div class="mt-6">
+		  <a
+			href="https://employee/client"
+			target="_blank"
+			class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition-all duration-200"
+		  >
+			<strong>{$username}</strong>
+		  </a>
+		</div>
+  
+		<!-- Logout Button -->
+		<button
+		  on:click={onLogout}
+		  class="mt-6 flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-[5px] hover:bg-blue-700 transition-all duration-200 w-full"
+		>
+		  <span>Logout</span>
+		</button>
+	  </div>
+	</aside>
+  
+	<!-- Main Content -->
+	<main class="flex-1 p-6">
+	  <slot />
+	</main>
+  </div>

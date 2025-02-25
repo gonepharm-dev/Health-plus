@@ -16,11 +16,12 @@
 		"clean": "rm -rf **/node_modules **/dist"
 	},
 	"devDependencies": {
-		"typescript": "^5.3.0",
 		"bun-types": "latest",
-		"concurrently": "^8.2.2"
+		"concurrently": "^8.2.2",
+		"typescript": "^5.3.0"
 	},
 	"dependencies": {
+		"lucide-svelte": "^0.475.0",
 		"pocketbase": "^0.25.1"
 	}
 }

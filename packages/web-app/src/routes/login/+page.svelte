@@ -4,7 +4,7 @@
   import GoogleIcon from '$lib/assets/google.svg';
   import { login, loginWithGoogle } from '$lib/services/authService';
   import { auth } from '$lib/stores/auth';
-	import { slide } from 'svelte/transition';
+  import { slide } from 'svelte/transition';
 
   export let data;
 
@@ -21,22 +21,27 @@
 
   $: isFormValid = formData.email?.trim() && formData.password?.trim();
 
+  // Handle email/password login
   async function handleSubmit(event: Event) {
     event.preventDefault();
     if (!isFormValid || loading) return;
-    
+
     loading = true;
     error = null;
-    
+
     try {
       const response = await login(formData.email, formData.password);
       success = 'Login successful!';
-      
+
       // Redirect based on user role
       const userRole = response.record.role;
-      setTimeout(() => {
+      if (userRole === 'doctor') {
+        goto('/doctor');
+      } else if (userRole === 'patient') {
         goto('/patient');
-      }, 500);
+      } else {
+        throw new Error('Unknown user role');
+      }
     } catch (err) {
       if (err instanceof Error) {
         if (err.message.includes('credentials')) {
@@ -54,10 +59,10 @@
     }
   }
 
-  // Enhanced Google login handler
+  // Handle Google login
   async function handleGoogleLogin() {
     if (loading) return;
-    
+
     loading = true;
     error = null;
 
@@ -86,33 +91,37 @@
   });
 
   async function handleGoogleCallback(code: string) {
-  loading = true;
-  error = null;
+    loading = true;
+    error = null;
 
-  try {
-    const response = await loginWithGoogle(code, import.meta.env.VITE_GOOGLE_REDIRECT_URI);
-    
-    if (response.data?.record) {
-      auth.setUser(response.data.record);
-      auth.setToken(response.data.token);
-      
-      // Redirect based on user role with correct route structure
-      const userRole = response.data.record.role;
-      const redirectPath = userRole === 'doctor' 
-        ? '/(auth)/(dashboard)/doctor' 
-        : '/(auth)/(dashboard)/patient';
-      goto(redirectPath);
-    } else {
-      throw new Error('Invalid response from Google login');
+    try {
+      const response = await loginWithGoogle(code, import.meta.env.VITE_GOOGLE_REDIRECT_URI);
+
+      if (response.data?.record) {
+        auth.setUser(response.data.record);
+        auth.setToken(response.data.token);
+
+        // Redirect based on user role
+        const userRole = response.data.record.role;
+        if (userRole === 'doctor') {
+          goto('/doctor');
+        } else if (userRole === 'patient') {
+          goto('/patient');
+        } else {
+          throw new Error('Unknown user role');
+        }
+      } else {
+        throw new Error('Invalid response from Google login');
+      }
+    } catch (err: any) {
+      error = err.message || 'Google login failed';
+      console.error('Google login error:', err);
+    } finally {
+      loading = false;
     }
-  } catch (err: any) {
-    error = err.message || 'Google login failed';
-    console.error('Google login error:', err);
-  } finally {
-    loading = false;
   }
-}
 
+  // Toggle password visibility
   function togglePasswordVisibility() {
     showPassword = !showPassword;
   }
@@ -176,7 +185,7 @@
           required
         />
       </div>
-      
+
       <div>
         <label for="password" class="block text-base font-thin text-gray-700">Password</label>
         <div class="relative">
@@ -187,7 +196,7 @@
             class="mt-1 block w-full rounded-md border bg-transparent border-gray-400 px-3 py-3 focus:border-[#3b82f6] focus:ring-[#3b82f6]"
             required
           />
-          <button 
+          <button
             type="button"
             class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
             on:click={togglePasswordVisibility}
