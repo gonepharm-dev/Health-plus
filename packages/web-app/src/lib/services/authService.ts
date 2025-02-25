@@ -48,24 +48,40 @@ export async function registerUser(userData: Omit<RegistrationData, 'hashedRando
  */
 export async function login(email: string, password: string): Promise<AuthResponse> {
   try {
-    // Use PocketBase authWithPassword
+    // Fetch the user first to check if they are active
+    const users = await pb.collection('users').getList(1, 1, {
+      filter: `email="${email}"`,
+    });
+
+    if (users.items.length === 0) {
+      throw new Error("User not found.");
+    }
+
+    const user = users.items[0];
+
+    // Check if the user is active (not soft-deleted)
+    if (user.active) {
+      throw new Error("Your account is deactivated. Please contact support.");
+    }
+
+    // Proceed with authentication
     const authData = await pb.collection('users').authWithPassword(email, password);
-    
-    // Update auth store - this is crucial
+
+    // Update auth store
     auth.authenticate(authData.record as unknown as User, authData.token);
-    
-    console.log('Login successful, auth state:', {
+
+    console.log("Login successful, auth state:", {
       user: authData.record,
       token: authData.token,
-      isValid: pb.authStore.isValid
+      isValid: pb.authStore.isValid,
     });
-    
+
     return {
       token: authData.token,
-      record: authData.record as unknown as User
+      record: authData.record as unknown as User,
     };
   } catch (error: unknown) {
-    console.error('Login error:', error);
+    console.error("Login error:", error);
     throw handleAuthError(error);
   }
 }
