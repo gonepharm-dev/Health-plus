@@ -3,6 +3,8 @@
 	import type { SvelteComponent } from 'svelte';
 	import { Activity, Users, Calendar, Settings, MessageSquare, LogOut, Home, Stethoscope, HeartPulse } from 'lucide-svelte';
 	import type { NavigationItem } from '$lib/types/navigation';
+	import { auth, currentUser } from '$lib/stores/auth';
+	import { goto } from '$app/navigation';
 
 	// Define navigation items for doctors and patients
 	const doctorNavigation: NavigationItem[] = [
@@ -87,9 +89,10 @@
 		!item.roles || item.roles.includes(userRole)
 	);
 
-	// Logout handler
-	function handleLogout() {
-		console.log('Chill msee');
+	// Update logout handler
+	async function handleLogout() {
+		auth.logout();
+		await goto('/login');
 	}
 
 	// Add state for mobile sidebar
@@ -166,13 +169,13 @@
 			<!-- User Info -->
 			<div class="flex items-center space-x-3 mb-6">
 				<img
-					src="https://via.placeholder.com/150"
+					src={$currentUser?.avatar || "https://via.placeholder.com/150"}
 					alt="User Avatar"
-					class="h-10 w-10 rounded-full"
+					class="h-10 w-10 rounded-full object-cover"
 				/>
 				<div>
-					<div class="text-sm font-medium text-text">JohnDoe</div>
-					<div class="text-xs text-text">john.doe@example.com</div>
+					<div class="text-sm font-medium text-text">{$currentUser?.username || 'Unknown User'}</div>
+					<div class="text-xs text-text">{$currentUser?.email || 'No email'}</div>
 				</div>
 			</div>
 
@@ -202,7 +205,7 @@
 </div>
 
 <!-- Update responsive styles -->
-<style>
+<style lang="postcss">
 	@media (max-width: 768px) {
 		aside {
 			height: 100vh;

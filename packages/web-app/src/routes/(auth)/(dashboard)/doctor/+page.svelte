@@ -1,7 +1,7 @@
 <script lang="ts">
   // Import Svelte and UI components
   import { onMount } from 'svelte';
-  import { Search, Bell, Plus, MoreVertical, ChevronLeft, ChevronRight } from 'lucide-svelte';
+  import { Search, Bell, Plus, MoreVertical, ChevronLeft, ChevronRight, Stethoscope, Calendar, Clock, CheckCircle, AlertCircle, BellRing, Pill } from 'lucide-svelte';
 
   // Chart canvas references
   let revenueChart: HTMLCanvasElement;
@@ -13,7 +13,7 @@
     item: string;
     date: string;
     status: 'Completed' | 'Pending';
-    icon: string;
+    icon: typeof Stethoscope;
   }
 
   let showNotifications = false; // State to control notification card visibility
@@ -21,11 +21,11 @@
 
   // Sample notifications data
   const notifications = [
-    { id: 1, message: 'You have a new appointment request.', icon: '🔔' },
-    { id: 2, message: 'Your prescription has been updated.', icon: '💊' },
-    { id: 3, message: 'You have an appointment tomorrow at 2 PM.', icon: '🔔' },
-    { id: 4, message: 'Time to take your evening medication.', icon: '💊' },
-    { id: 5, message: 'Follow-up appointment scheduled for next week.', icon: '🔔' }
+    { id: 1, message: 'You have a new appointment request.', icon: BellRing },
+    { id: 2, message: 'Your prescription has been updated.', icon: Pill },
+    { id: 3, message: 'You have an appointment tomorrow at 2 PM.', icon: BellRing },
+    { id: 4, message: 'Time to take your evening medication.', icon: Pill },
+    { id: 5, message: 'Follow-up appointment scheduled for next week.', icon: Calendar }
   ];
 
   function toggleNotifications() {
@@ -42,8 +42,8 @@
 
   // Mock transaction data
   const transactions: Transaction[] = [
-    { id: 1, item: 'Consultation with Dr. Smith', date: 'Jul 12th 2024', status: 'Completed', icon: '👨‍⚕️' },
-    { id: 2, item: 'Follow-up with Dr. Johnson', date: 'Jul 13th 2024', status: 'Completed', icon: '👩‍⚕️' },
+    { id: 1, item: 'Consultation with Dr. Smith', date: 'Jul 12th 2024', status: 'Completed', icon: Stethoscope },
+    { id: 2, item: 'Follow-up with Dr. Johnson', date: 'Jul 13th 2024', status: 'Pending', icon: Calendar },
   ];
 
   // Calendar state
@@ -124,7 +124,7 @@
   <!-- Header Section -->
   <header class="flex flex-col gap-4 mb-6">
     <div class="flex justify-between items-center">
-      <h1 class="text-xl font-semibold">Patient</h1>
+      <h1 class="text-xl font-semibold">Patient Dashboard</h1>
       
       <!-- Mobile Menu -->
       <div class="flex md:hidden items-center gap-2">
@@ -198,7 +198,7 @@
         <ul class="space-y-3">
           {#each notifications as notification}
             <li class="flex items-center gap-3 text-sm text-gray-700">
-              <span class="text-xl">{notification.icon}</span>
+              <svelte:component this={notification.icon} class="w-5 h-5 text-gray-600" />
               {notification.message}
             </li>
           {/each}
@@ -230,19 +230,42 @@
       </div>
 
       <!-- Appointments List -->
-      <div class="bg-background rounded-xl p-4 md:p-6">
-        <h3 class="font-semibold mb-4 md:mb-6">Appointments</h3>
-        <div class="space-y-4">
-          {#each transactions.filter(t => t.status === 'Completed') as transaction}
-            <div class="flex items-center justify-between border-b border-gray-200 pb-4">
-              <div class="flex items-center gap-3 md:gap-4">
-                <span class="text-xl md:text-2xl">{transaction.icon}</span>
+      <div class="bg-background rounded-xl p-4 md:p-6 shadow-sm border border-gray-200">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-semibold text-gray-800">Appointments</h3>
+          <button class="text-sm text-blue-600 hover:text-blue-700 font-medium">View All</button>
+        </div>
+        <div class="divide-y divide-gray-200">
+          {#each transactions as transaction}
+            <div class="flex items-center justify-between py-4 group hover:bg-gray-50 transition-colors rounded-lg px-2 border-b border-gray-100 last:border-b-0">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center shadow-sm border border-gray-200">
+                  <svelte:component this={transaction.icon} class="w-6 h-6 text-gray-600" />
+                </div>
                 <div>
-                  <p class="font-medium text-sm md:text-base">{transaction.item}</p>
-                  <p class="text-xs md:text-sm text-gray-500">{transaction.date}</p>
+                  <p class="text-sm font-medium text-gray-800 mb-1">{transaction.item}</p>
+                  <div class="flex items-center gap-2 text-xs text-gray-500">
+                    <Clock class="w-3 h-3" />
+                    <span>{transaction.date}</span>
+                  </div>
                 </div>
               </div>
-              <span class="text-xs md:text-sm text-green-600">{transaction.status}</span>
+              <div class="flex items-center gap-4">
+                <span class="px-3 py-1 rounded-full text-xs font-medium border flex items-center gap-1
+                  {transaction.status === 'Completed' 
+                    ? 'bg-green-50 text-green-700 border-green-200' 
+                    : 'bg-yellow-50 text-yellow-700 border-yellow-200'}">
+                  {#if transaction.status === 'Completed'}
+                    <CheckCircle class="w-3 h-3" />
+                  {:else}
+                    <AlertCircle class="w-3 h-3" />
+                  {/if}
+                  {transaction.status}
+                </span>
+                <button class="text-gray-400 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100">
+                  <MoreVertical class="w-4 h-4" />
+                </button>
+              </div>
             </div>
           {/each}
         </div>
