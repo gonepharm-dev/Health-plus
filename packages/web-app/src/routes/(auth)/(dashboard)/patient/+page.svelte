@@ -1,43 +1,310 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  // Import Svelte and UI components
+  import { onMount } from 'svelte';
+  import { Search, Bell, Plus, MoreVertical, ChevronLeft, ChevronRight, Stethoscope, Calendar, Clock, CheckCircle, AlertCircle, BellRing, Pill } from 'lucide-svelte';
+
+  // Chart canvas references
+  let revenueChart: HTMLCanvasElement;
+  let performanceChart: HTMLCanvasElement;
+
+  // Types and interfaces
+  interface Transaction {
+    id: number;
+    item: string;
+    date: string;
+    status: 'Completed' | 'Pending';
+    icon: typeof Stethoscope;
+  }
+
+  let showNotifications = false; // State to control notification card visibility
+  let showMobileSearch = false; // State to control mobile search visibility
+
+  // Sample notifications data
+  const notifications = [
+    { id: 1, message: 'You have a new appointment request.', icon: BellRing },
+    { id: 2, message: 'Your prescription has been updated.', icon: Pill },
+    { id: 3, message: 'You have an appointment tomorrow at 2 PM.', icon: BellRing },
+    { id: 4, message: 'Time to take your evening medication.', icon: Pill },
+    { id: 5, message: 'Follow-up appointment scheduled for next week.', icon: Calendar }
+  ];
+
+  function toggleNotifications() {
+    showNotifications = !showNotifications;
+  }
+
+  function closeNotifications() {
+    showNotifications = false;
+  }
+
+  function toggleMobileSearch() {
+    showMobileSearch = !showMobileSearch;
+  }
+
+  // Mock transaction data
+  const transactions: Transaction[] = [
+    { id: 1, item: 'Consultation with Dr. Smith', date: 'Jul 12th 2024', status: 'Completed', icon: Stethoscope },
+    { id: 2, item: 'Follow-up with Dr. Johnson', date: 'Jul 13th 2024', status: 'Pending', icon: Calendar },
+  ];
+
+  // Calendar state
+  let currentMonth: Date = new Date();
+
+  // Calendar navigation functions
+  function previousMonth() {
+    currentMonth.setMonth(currentMonth.getMonth() - 1);
+    currentMonth = new Date(currentMonth);
+  }
+
+  function nextMonth() {
+    currentMonth.setMonth(currentMonth.getMonth() + 1);
+    currentMonth = new Date(currentMonth);
+  }
+
+  // Calendar helper function
+  function getDaysInMonth(date: Date) {
+    const days = [];
+    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+    const lastDate = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    // Add empty slots for days before first of month
+    for (let i = 0; i < firstDay; i++) {
+      days.push(null);
+    }
+    // Add all days in month
+    for (let i = 1; i <= lastDate; i++) {
+      days.push(i);
+    }
+    return days;
+  }
+
+  // Typing animation state
+  const words = ['Records', 'Appointments', 'Doctors', 'Messages'];
+  let currentWord = '';
+  let currentWordIndex = 0;
+  let currentCharIndex = 0;
+  let isDeleting = false;
   
-  function joinConsultation() {
-    goto('/appointment?role=patient');
+  // Typing animation function
+  function typeWriter() {
+    const word = words[currentWordIndex];
+    
+    if (isDeleting) {
+      currentWord = word.substring(0, currentCharIndex - 1);
+      currentCharIndex--;
+    } else {
+      currentWord = word.substring(0, currentCharIndex + 1);
+      currentCharIndex++;
+    }
+    
+    // Determine the typing speed
+    let typeSpeed = isDeleting ? 50 : 100; // Faster deletion, slower typing
+    
+    // If completed typing word
+    if (!isDeleting && currentCharIndex === word.length) {
+      isDeleting = true;
+      typeSpeed = 1000; // Pause at end of word
+    }
+    
+    // If completed deleting word
+    if (isDeleting && currentCharIndex === 0) {
+      isDeleting = false;
+      currentWordIndex = (currentWordIndex + 1) % words.length;
+      typeSpeed = 500; // Pause before starting new word
+    }
+    
+    setTimeout(typeWriter, typeSpeed);
   }
-  function home() {
-    goto('/');
-  }
+  
+  onMount(() => {
+    typeWriter(); // Start the typing animation
+  });
 </script>
 
-<div class=" p-8">
-  <div class="max-w-3xl mx-auto text-center">
-    <h1 class="text-4xl font-bold mb-10">I am the Patient</h1>
-    
-    <img 
-      src="patient.gif" 
-      alt="Patient" 
-      class="w-72 h-72 rounded-lg mx-auto mb-8 shadow-lg"
-    />
-    
-    <div class="space-y-6">
-      <button
-        on:click={joinConsultation}
-        class="w-full max-w-md px-6 py-4 bg-amber-500 text-white rounded-xl font-medium
-          hover:bg-amber-600 transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
-      >
-        Join Consultation
-      </button>
+<!-- Main Layout Container -->
+<div class="min-h-[calc(100vh-4rem)] bg-background p-6">
+  <!-- Header Section -->
+  <header class="flex flex-col gap-4 mb-6">
+    <div class="flex justify-between items-center">
+      <h1 class="text-xl font-semibold">Patient Dashboard</h1>
       
-      <a 
-        href="/doctor" 
-        class="block text-lg text-amber-600 hover:text-amber-700 underline"
-      >
-       Take me to the Doctor
-      </a>
-      <button on:click={home}>
-        Home
+      <!-- Mobile Menu -->
+      <div class="flex md:hidden items-center gap-2">
+        <button class="p-2 rounded-lg border border-gray-200" on:click={toggleMobileSearch}>
+          <Search class="w-5 h-5" />
+        </button>
+        <button class="p-2 rounded-lg border border-gray-200" on:click={toggleNotifications}>
+          <Bell class="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Search Bar -->
+    {#if showMobileSearch}
+      <div class="md:hidden w-full">
+        <div class="relative">
+          <input 
+            type="search" 
+            placeholder="Search {currentWord.toLowerCase()}..." 
+            class="w-full pl-10 pr-4 py-2 rounded-lg border border-background" 
+          />
+          <Search class="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+        </div>
+      </div>
+    {/if}
+
+    <!-- Desktop Controls -->
+    <div class="hidden md:flex items-center gap-4">
+      <!-- Search Bar -->
+      <div class="relative flex-1 max-w-md">
+        <input 
+          type="search" 
+          placeholder="Search {currentWord.toLowerCase()}..." 
+          class="w-full pl-10 pr-4 py-2 rounded-lg border border-background" 
+        />
+        <Search class="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+      </div>
+      <!-- Notification Button -->
+      <div class="relative">
+        <button class="p-2 rounded-lg border border-gray-200" on:click={toggleNotifications}>
+          <Bell class="w-5 h-5" />
+          {#if notifications.length > 0}
+            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              {notifications.length}
+            </span>
+          {/if}
+        </button>
+      </div>
+      <!-- Appointment Button -->
+      <button class="ml-auto bg-secondary text-white px-4 py-2 rounded-lg flex items-center gap-2 font-bold whitespace-nowrap">
+        <Plus class="w-4 h-4" />
+        Book Appointment
       </button>
+    </div>
+
+    <!-- Mobile Appointment Button -->
+    <button class="md:hidden w-full bg-secondary text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 font-bold">
+      <Plus class="w-4 h-4" />
+      Book Appointment
+    </button>
+  </header>
+
+  <!-- Notifications Panel -->
+  {#if showNotifications}
+    <div class="fixed inset-0 z-50 bg-black bg-opacity-50 md:bg-transparent md:inset-auto md:absolute md:top-16 md:right-6">
+      <div class="bg-white w-full h-full md:h-auto md:w-80 p-6 md:rounded-lg md:shadow-lg">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-lg">Notifications</h3>
+          <button class="p-2" on:click={closeNotifications}>✕</button>
+        </div>
+        <ul class="space-y-3">
+          {#each notifications as notification}
+            <li class="flex items-center gap-3 text-sm text-gray-700">
+              <svelte:component this={notification.icon} class="w-5 h-5 text-gray-600" />
+              {notification.message}
+            </li>
+          {/each}
+        </ul>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Main Content Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 h-[calc(100%-4rem)]">
+    <!-- Left Column - Main Content -->
+    <div class="col-span-12 md:col-span-8 space-y-4 md:space-y-6">
+      <!-- Update Banner -->
+      <div class="bg-secondary text-white p-4 md:p-6 rounded-xl">
+        <span class="text-lg font-extrabold">Updates</span>
+        <p class="text-lg mt-2">Your Records are now available</p>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+        <div class="bg-background p-3 md:p-4 rounded-xl border-2 border-[#1D5DEC] flex flex-col items-center">
+          <p class="text-text text-center text-sm">Total doctors available</p>
+          <h2 class="text-xl md:text-2xl font-semibold text-text">9</h2>
+        </div>
+        <div class="bg-background p-3 md:p-4 rounded-xl border-2 border-[#1D5DEC] flex flex-col items-center">
+          <p class="text-text text-center text-sm">Upcoming appointments</p>
+          <h2 class="text-xl md:text-2xl font-semibold text-text">5</h2>
+        </div>
+      </div>
+
+      <!-- Appointments List -->
+      <div class="bg-background rounded-xl p-4 md:p-6 shadow-sm border border-gray-200">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-semibold text-gray-800">Appointments</h3>
+          <button class="text-sm text-blue-600 hover:text-blue-700 font-medium">View All</button>
+        </div>
+        <div class="divide-y divide-gray-200">
+          {#each transactions as transaction}
+            <div class="flex items-center justify-between py-4 group hover:bg-gray-50 transition-colors rounded-lg px-2 border-b border-gray-100 last:border-b-0">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center shadow-sm border border-gray-200">
+                  <svelte:component this={transaction.icon} class="w-6 h-6 text-gray-600" />
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-800 mb-1">{transaction.item}</p>
+                  <div class="flex items-center gap-2 text-xs text-gray-500">
+                    <Clock class="w-3 h-3" />
+                    <span>{transaction.date}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="px-3 py-1 rounded-full text-xs font-medium border flex items-center gap-1
+                  {transaction.status === 'Completed' 
+                    ? 'bg-green-50 text-green-700 border-green-200' 
+                    : 'bg-yellow-50 text-yellow-700 border-yellow-200'}">
+                  {#if transaction.status === 'Completed'}
+                    <CheckCircle class="w-3 h-3" />
+                  {:else}
+                    <AlertCircle class="w-3 h-3" />
+                  {/if}
+                  {transaction.status}
+                </span>
+                <button class="text-gray-400 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100">
+                  <MoreVertical class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Calendar Widget -->
+    <div class="col-span-12 md:col-span-4 bg-background rounded-xl p-4 md:p-6 border-2 border-[#1D5DEC]">
+      <!-- Calendar Header -->
+      <div class="flex justify-between items-center mb-4">
+        <button class="p-2" on:click={previousMonth}>
+          <ChevronLeft class="w-5 h-5 text-gray-400" />
+        </button>
+        <h2 class="text-base md:text-lg font-semibold">{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
+        <button class="p-2" on:click={nextMonth}>
+          <ChevronRight class="w-5 h-5 text-gray-400" />
+        </button>
+      </div>
+      <!-- Calendar Days Header -->
+      <div class="grid grid-cols-7 gap-1 md:gap-2 text-center text-gray-600 text-xs md:text-sm">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+      <!-- Calendar Days Grid -->
+      <div class="grid grid-cols-7 gap-1 md:gap-2 mt-2">
+        {#each getDaysInMonth(currentMonth) as day}
+          {#if day !== null}
+            <div class="p-2 md:p-3 text-center text-sm">{day}</div>
+          {:else}
+            <div></div>
+          {/if}
+        {/each}
+      </div>
     </div>
   </div>
 </div>
+
+<!-- Global Styles -->
+<style lang="postcss">
+  :global(body) {
+    @apply bg-gray-50;
+  }
+</style>

@@ -4,21 +4,24 @@
 	"private": true,
 	"type": "module",
 	"workspaces": [
-	  "packages/*"
+		"packages/*"
 	],
 	"scripts": {
-	  "dev": "concurrently \"bun run dev:web\" \"bun run dev:backend\"",
-	  "dev:web": "cd packages/web-app && bun run dev",
-	  "dev:backend": "cd packages/backend-express && bun run dev",
-	  "build": "bun run build:web && bun run build:backend",
-	  "build:web": "cd packages/web-app && bun run build",
-	  "build:backend": "cd packages/backend-express && bun run build",
-	  "clean": "rm -rf **/node_modules **/dist"
+		"dev": "concurrently \"bun run dev:web\" \"bun run dev:backend\"",
+		"dev:web": "cd packages/web-app && bun run dev",
+		"dev:backend": "cd packages/backend-express && bun run dev",
+		"build": "bun run build:web && bun run build:backend",
+		"build:web": "cd packages/web-app && bun run build",
+		"build:backend": "cd packages/backend-express && bun run build",
+		"clean": "rm -rf **/node_modules **/dist"
 	},
 	"devDependencies": {
-	  "typescript": "^5.3.0",
-	  "bun-types": "latest",
-	  "concurrently": "^8.2.2"
+		"bun-types": "latest",
+		"concurrently": "^8.2.2",
+		"typescript": "^5.3.0"
+	},
+	"dependencies": {
+		"lucide-svelte": "^0.475.0",
+		"pocketbase": "^0.25.1"
 	}
-  }
-  
+}
