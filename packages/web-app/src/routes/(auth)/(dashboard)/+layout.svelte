@@ -121,15 +121,16 @@
 <!-- Main container with background color -->
 <div class="flex h-[100dvh] bg-background">
 	<!-- Sidebar -->
-	<aside class="{isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:static top-0 left-0 z-40 w-64 h-full transition-transform duration-300 flex flex-col justify-between bg-background text-text border-r-2 border-[#1D5DEC] border-opacity-30">
+	<aside class="{isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:static top-0 left-0 z-40 w-64 h-full transition-transform duration-300 flex flex-col bg-background text-text border-r-2 border-[#1D5DEC] border-opacity-30">
 		<!-- Close button for mobile -->
 		<button on:click={toggleSidebar} class="md:hidden absolute right-4 top-4 text-text p-2">
 			<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 			</svg>
 		</button>
+
+		<!-- Top section with logo -->
 		<div class="p-6">
-			<!-- Logo or Brand Name -->
 			<h1 class="text-xl font-bold flex items-center">
 				<img src="/logo.png" alt="HealthPlus Logo" class="h-8 w-auto mr-2" />
 				HealthPlus
@@ -138,12 +139,10 @@
 			<!-- Menu Sections -->
 			<div class="mt-12">
 				<div class="mb-6">
-					<!-- Section Title -->
 					<h3 class="text-xs font-semibold uppercase mb-2 text-text">
 						Overview
 					</h3>
 
-					<!-- Menu Items -->
 					<div class="space-y-1">
 						{#each filteredNavigation as item}
 							<a
@@ -161,32 +160,32 @@
 				</div>
 			</div>
 		</div>
-		<!-- Horizontal Divider -->
-		<div class="border-b-2 border-text mx-6 mt-auto opacity-20"></div>
 
-		<!-- User Info and Logout Button -->
-		<div class="p-6">
-			<!-- User Info -->
-			<div class="flex items-center space-x-3 mb-6">
-				<img
-					src={$currentUser?.avatar || "https://via.placeholder.com/150"}
-					alt="User Avatar"
-					class="h-10 w-10 rounded-full object-cover"
-				/>
-				<div>
-					<div class="text-sm font-medium text-text">{$currentUser?.username || 'Unknown User'}</div>
-					<div class="text-xs text-text">{$currentUser?.email || 'No email'}</div>
+		<!-- Bottom section with user info and logout -->
+		<div class="mt-auto border-t border-text/20">
+			<div class="p-4">
+				<!-- User Info -->
+				<div class="flex items-center space-x-3 mb-4">
+					<img
+						src={$currentUser?.avatar || "https://via.placeholder.com/150"}
+						alt="User Avatar"
+						class="h-10 w-10 rounded-full object-cover"
+					/>
+					<div>
+						<div class="text-sm font-medium text-text">{$currentUser?.username || 'Unknown User'}</div>
+						<div class="text-xs text-text">{$currentUser?.email || 'No email'}</div>
+					</div>
 				</div>
-			</div>
 
-			<!-- Logout Button -->
-			<button
-				on:click={handleLogout}
-				class="flex items-center justify-center px-3 py-2 text-sm font-bold rounded-lg transition-all duration-200 w-full bg-secondary text-white hover:bg-blue-800"
-			>
-				<LogOut class="mr-2 h-4 w-4" />
-				<span>Logout</span>
-			</button>
+				<!-- Logout Button -->
+				<button
+					on:click={handleLogout}
+					class="flex items-center justify-center px-3 py-2 text-sm font-bold rounded-lg transition-all duration-200 w-full bg-secondary text-white hover:bg-blue-800"
+				>
+					<LogOut class="mr-2 h-4 w-4" />
+					<span>Logout</span>
+				</button>
+			</div>
 		</div>
 	</aside>
 
