@@ -13,7 +13,7 @@ import initializeSocket from './middlewares/socketConfig';
 import videoSessionRoute from './routes/videoSessionRoute';
 
 const app = express();
-const PORT = 3001;
+const PORT = Number(process.env.PORT) || 3001;
 
 const corsOptions = {
     origin: ["http://localhost:5173", "https://yourfrontenddomain.com"],
